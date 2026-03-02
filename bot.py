@@ -256,14 +256,36 @@ def _is_addstore_trigger_text(text: str) -> bool:
     return "admin" in normalized and "addstore" in normalized
 
 
+def _track_dm_message(user_id: int, message_id: int) -> None:
+    _dm_messages.setdefault(user_id, []).append(message_id)
+
+
+async def _reply_text_tracked(message, user_id: int, text: str, **kwargs):
+    sent = await message.reply_text(text, **kwargs)
+    _track_dm_message(user_id, sent.message_id)
+    return sent
+
+
+async def _clear_tracked_dm_messages(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
+    message_ids = list(dict.fromkeys(_dm_messages.get(user_id, [])))
+    for msg_id in message_ids:
+        try:
+            await context.bot.delete_message(chat_id=user_id, message_id=msg_id)
+        except (BadRequest, Forbidden):
+            pass
+    _dm_messages.pop(user_id, None)
+
+
 async def _start_add_store_flow(update: Update) -> None:
     user_id = update.effective_user.id
+    _dm_messages[user_id] = []
+    _track_dm_message(user_id, update.message.message_id)
     pending[user_id] = {
         "mode": "add_store",
         "step": "store_name",
         "data": {},
     }
-    await update.message.reply_text("Give me the store name.")
+    await _reply_text_tracked(update.message, user_id, "Give me the store name.")
 
 
 def _parse_target_link(link: str) -> tuple[int | str, int | None, int | None] | None:
@@ -337,7 +359,7 @@ async def _finalize_add_store(update: Update, context: ContextTypes.DEFAULT_TYPE
     target_thread_id = data.get("target_thread_id")
 
     try:
-        await context.bot.send_photo(
+        sent = await context.bot.send_photo(
             chat_id=target_chat_id,
             photo=image_value,
             caption=caption,
@@ -347,15 +369,20 @@ async def _finalize_add_store(update: Update, context: ContextTypes.DEFAULT_TYPE
             message_thread_id=target_thread_id,
         )
     except (BadRequest, Forbidden) as exc:
-        await update.message.reply_text(
+        await _reply_text_tracked(
+            update.message,
+            user_id,
             f"I couldn't send it there: {exc}\nSend another destination link.",
         )
         if image_type == "url":
-            await update.message.reply_text(image_value)
+            await _reply_text_tracked(update.message, user_id, image_value)
         return False
 
+    if target_chat_id == update.effective_chat.id:
+        _track_dm_message(user_id, sent.message_id)
+
     pending.pop(user_id, None)
-    await update.message.reply_text("Sent ✅")
+    await _clear_tracked_dm_messages(context, user_id)
     return True
 
 
@@ -368,48 +395,60 @@ async def _handle_add_store_text(update: Update, context: ContextTypes.DEFAULT_T
     text = (update.message.text or "").strip()
     step = flow.get("step")
     data = flow.setdefault("data", {})
+    _track_dm_message(user_id, update.message.message_id)
 
     if step == "store_name":
         data["store_name"] = text
         flow["step"] = "image"
-        await update.message.reply_text("Give me the image.")
+        await _reply_text_tracked(update.message, user_id, "Give me the image.")
         return True
 
     if step == "image":
         normalized = _normalize_store_url(text)
         if not normalized.startswith(("http://", "https://")):
-            await update.message.reply_text("Give me the image.")
+            await _reply_text_tracked(update.message, user_id, "Give me the image.")
             return True
         data["image_type"] = "url"
         data["image"] = normalized
         flow["step"] = "store_url"
-        await update.message.reply_text("Give me the store URL")
+        await _reply_text_tracked(update.message, user_id, "Give me the store URL")
         return True
 
     if step == "store_url":
         data["store_url"] = _normalize_store_url(text)
         flow["step"] = "country"
-        await update.message.reply_text(
+        await _reply_text_tracked(
+            update.message,
+            user_id,
             "Select the country",
             reply_markup=_store_country_keyboard(),
         )
         return True
 
     if step == "country":
-        await update.message.reply_text("Select the country", reply_markup=_store_country_keyboard())
+        await _reply_text_tracked(
+            update.message,
+            user_id,
+            "Select the country",
+            reply_markup=_store_country_keyboard(),
+        )
         return True
 
     if step == "limit":
         data["limit"] = text
         flow["step"] = "timeframe"
-        await update.message.reply_text(
+        await _reply_text_tracked(
+            update.message,
+            user_id,
             "Select timeframe",
             reply_markup=_store_timeframe_keyboard(),
         )
         return True
 
     if step == "timeframe":
-        await update.message.reply_text(
+        await _reply_text_tracked(
+            update.message,
+            user_id,
             "Select timeframe",
             reply_markup=_store_timeframe_keyboard(),
         )
@@ -418,19 +457,21 @@ async def _handle_add_store_text(update: Update, context: ContextTypes.DEFAULT_T
     if step == "method":
         data["method"] = text
         flow["step"] = "notes"
-        await update.message.reply_text("Add your notes")
+        await _reply_text_tracked(update.message, user_id, "Add your notes")
         return True
 
     if step == "notes":
         data["notes"] = text
         flow["step"] = "destination"
-        await update.message.reply_text("Where should I send this message?")
+        await _reply_text_tracked(update.message, user_id, "Where should I send this message?")
         return True
 
     if step == "destination":
         parsed = _parse_target_link(text)
         if not parsed:
-            await update.message.reply_text(
+            await _reply_text_tracked(
+                update.message,
+                user_id,
                 "Invalid link. Send a Telegram post link like https://t.me/c/3857658928/148",
             )
             return True
@@ -456,6 +497,7 @@ async def _handle_add_store_media(update: Update) -> bool:
 
     data = flow.setdefault("data", {})
     message = update.message
+    _track_dm_message(user_id, message.message_id)
 
     if message.photo:
         data["image_type"] = "photo"
@@ -464,11 +506,11 @@ async def _handle_add_store_media(update: Update) -> bool:
         data["image_type"] = "document"
         data["image"] = message.document.file_id
     else:
-        await update.message.reply_text("Give me the image.")
+        await _reply_text_tracked(update.message, user_id, "Give me the image.")
         return True
 
     flow["step"] = "store_url"
-    await update.message.reply_text("Give me the store URL")
+    await _reply_text_tracked(update.message, user_id, "Give me the store URL")
     return True
 
 
@@ -492,7 +534,7 @@ async def store_country_callback(update: Update, context: ContextTypes.DEFAULT_T
     data["country"] = country_code
     flow["step"] = "limit"
 
-    await query.message.reply_text("Give me the $ or item limit.")
+    await _reply_text_tracked(query.message, user_id, "Give me the $ or item limit.")
 
 
 async def store_timeframe_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -516,7 +558,7 @@ async def store_timeframe_callback(update: Update, context: ContextTypes.DEFAULT
     data["timeframe"] = timeframe_label
     flow["step"] = "method"
 
-    await query.message.reply_text("Give me the method.")
+    await _reply_text_tracked(query.message, user_id, "Give me the method.")
 
 
 # ─── Revocation job ─────────────────────────────────────────────────────────
