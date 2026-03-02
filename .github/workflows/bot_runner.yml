@@ -1,0 +1,41 @@
+name: Gateway TG Bot Runner
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */5 * * *"
+
+concurrency:
+  group: gateway-tg-bot-runner
+  cancel-in-progress: false
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      GROUP_IDS: ${{ secrets.GROUP_IDS }}
+      GROUP_NAMES: ${{ secrets.GROUP_NAMES }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bot loop (~4h50m)
+        shell: bash
+        run: |
+          end=$((SECONDS + 17400))
+          while [ $SECONDS -lt $end ]; do
+            echo "Starting bot process..."
+            python -u bot.py || true
+            echo "Bot stopped; restarting in 5s..."
+            sleep 5
+          done
