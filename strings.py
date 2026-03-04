@@ -10,17 +10,16 @@ STRINGS = {
             "🔢 To get your invite links, "
             "solve this math problem:\n\n"
             "What is *{q}*?\n\n"
-            "Type your answer:"
+            "Tap the correct answer below:"
         ),
-        "correct": "✅ Correct! Generating your invite links...",
+        "correct": "✅ Well done! That’s correct! 🎉 I’m now generating your invite links... 🚀",
         "incorrect": "❌ Incorrect answer.\nUse /start to try again with a new problem.",
-        "not_a_number": "❌ Please send only a number as your answer.\nTry again:",
+        "not_a_number": "❌ Please tap one of the answer buttons below the math question.",
         "no_pending": "⚠️ You don't have a pending problem.\nUse /start to begin.",
         "links_message": (
-            "🔗 Your links (valid for 60 s):\n\n"
-            "Tap the buttons below to join.\n"
-            "If any expired, use /start again.\n\n"
-            "⚠️ Your request may need admin approval to join."
+            "🔗 Here are your invite links (valid for the next 60 seconds):\n"
+            "Tap the buttons below to join the rooms. 👇\n"
+            "If they expire, no worries! Just type /start again to get new buttons. ⏰"
         ),
         "no_links": "⚠️ Could not generate links at this time.\nContact an administrator.",
 
@@ -183,17 +182,16 @@ STRINGS = {
             "🔢 Para obtener tus enlaces de invitación, "
             "resuelve este problema matemático:\n\n"
             "¿Cuánto es *{q}*?\n\n"
-            "Escribe tu respuesta:"
+            "Toca la respuesta correcta abajo:"
         ),
-        "correct": "✅ ¡Correcto! Generando tus enlaces de invitación...",
+        "correct": "✅ ¡Bien hecho! ¡Eso es correcto! 🎉 Ahora estoy generando tus enlaces de invitación... 🚀",
         "incorrect": "❌ Respuesta incorrecta.\nUsa /start para intentar con un nuevo problema.",
-        "not_a_number": "❌ Por favor, envía únicamente un número como respuesta.\nIntenta de nuevo:",
+        "not_a_number": "❌ Toca uno de los botones de respuesta debajo del problema matemático.",
         "no_pending": "⚠️ No tienes un problema pendiente.\nUsa /start para comenzar.",
         "links_message": (
-            "🔗 Tus enlaces (válidos por 60 s):\n\n"
-            "Toca los botones de abajo para unirte.\n"
-            "Si alguno expiró, vuelve a usar /start.\n\n"
-            "⚠️ Tu solicitud puede necesitar aprobación de un administrador."
+            "🔗 Aquí están tus enlaces de invitación (válidos durante los próximos 60 segundos):\n"
+            "Toca los botones de abajo para unirte a las salas. 👇\n"
+            "Si expiran, ¡no pasa nada! Solo escribe /start para obtener nuevos botones. ⏰"
         ),
         "no_links": "⚠️ No se pudieron generar enlaces en este momento.\nContacta a un administrador.",
 
