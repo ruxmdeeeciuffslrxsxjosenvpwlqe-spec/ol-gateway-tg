@@ -175,7 +175,7 @@ STORE_TIMEFRAMES: dict[str, str] = {
 }
 
 STORE_METHODS: dict[str, str] = {
-    "M_FTID_V3": "FTID v3",
+    "M_FTID_V3": "FTIDv3",
     "M_WEIGHTED_FTID": "Weighted FTID",
     "M_LIT": "LIT",
     "M_DNA": "DNA",
@@ -251,7 +251,7 @@ def _store_timeframe_keyboard() -> InlineKeyboardMarkup:
 
 def _store_method_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("FTID v3", callback_data="store_method_M_FTID_V3")],
+        [InlineKeyboardButton("FTIDv3", callback_data="store_method_M_FTID_V3")],
         [InlineKeyboardButton("Weighted FTID", callback_data="store_method_M_WEIGHTED_FTID")],
         [InlineKeyboardButton("LIT", callback_data="store_method_M_LIT")],
         [InlineKeyboardButton("DNA", callback_data="store_method_M_DNA")],
