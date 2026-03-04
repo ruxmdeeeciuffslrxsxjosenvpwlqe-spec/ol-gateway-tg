@@ -445,6 +445,31 @@ def _mtproto_ready() -> bool:
     return True
 
 
+def _progress_bar(done: int, total: int, width: int = 12) -> str:
+    total = max(1, total)
+    done = max(0, min(done, total))
+    filled = int((done / total) * width)
+    bar = "█" * filled + "░" * (width - filled)
+    percent = int((done / total) * 100)
+    return f"[{bar}] {percent}% ({done}/{total})"
+
+
+async def _try_edit_status_message(status_message, text: str) -> bool:
+    if not status_message:
+        return False
+
+    try:
+        await status_message.edit_text(text)
+        return True
+    except BadRequest as exc:
+        if "message is not modified" in str(exc).lower():
+            return True
+    except Forbidden:
+        pass
+
+    return False
+
+
 def _extract_topic_message_ids(messages, topic_id: int) -> list[int]:
     ids: list[int] = []
     for msg in messages:
@@ -500,10 +525,15 @@ async def _copy_section_messages(
     source_anchor_message_id: int,
     destination_chat_id: int,
     destination_topic_id: int,
+    status_message=None,
 ) -> tuple[int, str | None]:
     message_ids: list[int] = []
 
     if _mtproto_ready():
+        await _try_edit_status_message(
+            status_message,
+            "🔍 Scanning source section...\n" + _progress_bar(1, 1),
+        )
         message_ids = await _collect_topic_message_ids(source_chat_id, source_topic_id)
 
     if not message_ids:
@@ -513,6 +543,7 @@ async def _copy_section_messages(
             source_anchor_message_id=source_anchor_message_id,
             destination_chat_id=destination_chat_id,
             destination_topic_id=destination_topic_id,
+            status_message=status_message,
         )
 
     if not message_ids:
@@ -521,8 +552,15 @@ async def _copy_section_messages(
             "Send an older link in the same section and try again."
         )
 
+    total_to_copy = len(message_ids)
+    await _try_edit_status_message(
+        status_message,
+        "📦 Copying messages...\n" + _progress_bar(0, total_to_copy),
+    )
+
     copied = 0
-    for message_id in message_ids:
+    update_every = max(1, total_to_copy // 20)
+    for idx, message_id in enumerate(message_ids, start=1):
         try:
             await context.bot.copy_message(
                 chat_id=destination_chat_id,
@@ -538,6 +576,14 @@ async def _copy_section_messages(
                 source_chat_id,
                 destination_chat_id,
                 exc,
+            )
+
+        if idx % update_every == 0 or idx == total_to_copy:
+            await _try_edit_status_message(
+                status_message,
+                "📦 Copying messages...\n"
+                + _progress_bar(idx, total_to_copy)
+                + f"\n✅ Copied so far: {copied}",
             )
 
     if copied == 0:
@@ -589,6 +635,7 @@ async def _collect_bot_message_ids_with_probe(
     source_anchor_message_id: int,
     destination_chat_id: int,
     destination_topic_id: int,
+    status_message=None,
 ) -> list[int]:
     window_back = 200
     window_forward = 2000
@@ -596,11 +643,15 @@ async def _collect_bot_message_ids_with_probe(
 
     start_id = max(1, source_anchor_message_id - window_back)
     end_id = source_anchor_message_id + window_forward
+    total_to_check = end_id - start_id + 1
 
     collected: list[int] = []
     misses_after_found = 0
+    checked = 0
+    update_every = max(1, total_to_check // 25)
 
     for message_id in range(start_id, end_id + 1):
+        checked += 1
         is_bot_origin = await _probe_message_from_this_bot(
             context=context,
             source_chat_id=source_chat_id,
@@ -618,6 +669,14 @@ async def _collect_bot_message_ids_with_probe(
             misses_after_found += 1
             if misses_after_found >= stop_after_miss:
                 break
+
+        if checked % update_every == 0 or checked == total_to_check:
+            await _try_edit_status_message(
+                status_message,
+                "🔍 Scanning source section...\n"
+                + _progress_bar(checked, total_to_check)
+                + f"\n📨 Bot messages found: {len(collected)}",
+            )
 
     return collected
 
@@ -846,7 +905,11 @@ async def _handle_copy_messages_text(update: Update, context: ContextTypes.DEFAU
             )
             return True
 
-        await _reply_text_tracked(update.message, user_id, "Scraping and copying messages now...")
+        status_message = await _reply_text_tracked(
+            update.message,
+            user_id,
+            "🔍 Scanning source section...\n" + _progress_bar(0, 1),
+        )
 
         copied, err = await _copy_section_messages(
             context=context,
@@ -855,19 +918,27 @@ async def _handle_copy_messages_text(update: Update, context: ContextTypes.DEFAU
             source_anchor_message_id=data["source_anchor_message_id"],
             destination_chat_id=destination_chat_id,
             destination_topic_id=destination_topic_id,
+            status_message=status_message,
         )
 
         pending.pop(user_id, None)
 
         if err:
-            await _reply_text_tracked(update.message, user_id, err)
+            edited = await _try_edit_status_message(status_message, f"❌ {err}")
+            if not edited:
+                await _reply_text_tracked(update.message, user_id, err)
             return True
 
-        await _reply_text_tracked(
-            update.message,
-            user_id,
-            f"Done. I copied {copied} message(s) to that section.",
+        edited = await _try_edit_status_message(
+            status_message,
+            f"✅ Done. I copied {copied} message(s) to that section.",
         )
+        if not edited:
+            await _reply_text_tracked(
+                update.message,
+                user_id,
+                f"Done. I copied {copied} message(s) to that section.",
+            )
         return True
 
     return False
