@@ -21,6 +21,8 @@ jobs:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       GROUP_IDS: ${{ secrets.GROUP_IDS }}
       GROUP_NAMES: ${{ secrets.GROUP_NAMES }}
+      TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+      TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
