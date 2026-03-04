@@ -527,6 +527,172 @@ def _progress_bar(done: int, total: int, width: int = 12) -> str:
     return f"[{bar}] {percent}% ({done}/{total})"
 
 
+def _countdown_bar(seconds_left: int, total_seconds: int = 60, width: int = 12) -> str:
+    total_seconds = max(1, total_seconds)
+    seconds_left = max(0, min(seconds_left, total_seconds))
+    filled = int((seconds_left / total_seconds) * width)
+    bar = "█" * filled + "░" * (width - filled)
+    percent = int((seconds_left / total_seconds) * 100)
+    return f"[{bar}] {percent}%"
+
+
+def _gateway_links_text(seconds_left: int) -> str:
+    return (
+        f"🔗 Here are your invite links (valid for the next {seconds_left} seconds):\n"
+        f"{_countdown_bar(seconds_left)}\n\n"
+        "Tap the buttons below to join the rooms. 👇\n"
+        "If they expire, no worries! Just type /start again to get new buttons. ⏰"
+    )
+
+
+def _math_answer_options(answer: int) -> list[int]:
+    options = {answer}
+    while len(options) < 4:
+        delta = random.randint(1, 10)
+        candidate = answer + random.choice((-delta, delta))
+        if candidate < 0:
+            candidate = answer + delta
+        options.add(candidate)
+
+    values = list(options)
+    random.shuffle(values)
+    return values
+
+
+def _math_answer_keyboard(options: list[int]) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = []
+    for idx in range(0, len(options), 2):
+        row_values = options[idx: idx + 2]
+        rows.append([
+            InlineKeyboardButton(str(value), callback_data=f"math_answer_{value}")
+            for value in row_values
+        ])
+    return InlineKeyboardMarkup(rows)
+
+
+def _links_keyboard_from_specs(button_specs: list[list[dict[str, str]]]) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(btn["text"], url=btn["url"]) for btn in row]
+        for row in button_specs
+    ])
+
+
+async def _start_math_challenge(message, user_id: int, lang: str, edit: bool = False):
+    question, answer = generate_math_problem()
+    options = _math_answer_options(answer)
+    pending[user_id] = {
+        "lang": lang,
+        "question": question,
+        "answer": answer,
+        "options": options,
+    }
+
+    text = t(lang, "math_prompt", q=question)
+    keyboard = _math_answer_keyboard(options)
+
+    if edit:
+        sent = await message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
+    else:
+        sent = await message.reply_text(text, parse_mode="Markdown", reply_markup=keyboard)
+    return sent
+
+
+async def _links_countdown_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    data = context.job.data or {}
+    user_id = data.get("user_id")
+    message_id = data.get("message_id")
+    total_seconds = int(data.get("total_seconds", 60))
+    started_at = float(data.get("started_at", time.time()))
+    button_specs = data.get("button_specs", [])
+
+    if not user_id or not message_id:
+        context.job.schedule_removal()
+        return
+
+    elapsed = int(time.time() - started_at)
+    seconds_left = max(0, total_seconds - elapsed)
+
+    try:
+        await context.bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=_gateway_links_text(seconds_left),
+            reply_markup=_links_keyboard_from_specs(button_specs),
+        )
+    except BadRequest as exc:
+        if "message is not modified" not in str(exc).lower():
+            context.job.schedule_removal()
+    except Forbidden:
+        context.job.schedule_removal()
+
+    if seconds_left <= 0:
+        context.job.schedule_removal()
+
+
+async def _complete_gateway_success(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int, lang: str) -> None:
+    verified_users[user_id] = time.time()
+    source_message = update.effective_message
+    if not source_message:
+        return
+
+    invite_entries: list[dict] = []
+    buttons: list[list[InlineKeyboardButton]] = []
+    button_specs: list[list[dict[str, str]]] = []
+
+    for gid, gname in zip(GROUP_IDS, GROUP_NAMES):
+        try:
+            invite = await context.bot.create_chat_invite_link(
+                chat_id=gid,
+                expire_date=datetime.now(timezone.utc) + timedelta(seconds=60),
+                creates_join_request=True,
+                name=f"Gateway – {user_id}",
+            )
+            invite_entries.append({"chat_id": gid, "invite_link": invite})
+            label = f"🔗 {gname}"
+            buttons.append([InlineKeyboardButton(label, url=invite.invite_link)])
+            button_specs.append([{"text": label, "url": invite.invite_link}])
+            logger.info("Link created → %s (%s) | %s", gid, gname, invite.invite_link)
+        except (Forbidden, BadRequest) as exc:
+            logger.warning("Error creating link in %s (%s): %s", gid, gname, exc)
+
+    if not buttons:
+        msg = await source_message.reply_text(t(lang, "no_links"))
+        _dm_messages.setdefault(user_id, []).append(msg.message_id)
+        return
+
+    links_msg = await source_message.reply_text(
+        _gateway_links_text(60),
+        reply_markup=InlineKeyboardMarkup(buttons),
+    )
+    _dm_messages.setdefault(user_id, []).append(links_msg.message_id)
+
+    countdown_job_name = f"links_countdown_{user_id}_{int(time.time())}"
+    context.application.job_queue.run_repeating(
+        callback=_links_countdown_job,
+        interval=1,
+        first=1,
+        data={
+            "user_id": user_id,
+            "message_id": links_msg.message_id,
+            "total_seconds": 60,
+            "started_at": time.time(),
+            "button_specs": button_specs,
+        },
+        name=countdown_job_name,
+    )
+
+    context.application.job_queue.run_once(
+        callback=revoke_links_job,
+        when=60,
+        data={
+            "invite_entries": invite_entries,
+            "user_id": user_id,
+            "countdown_job_name": countdown_job_name,
+        },
+        name=f"revoke_{user_id}_{datetime.now(timezone.utc).timestamp():.0f}",
+    )
+
+
 async def _try_edit_status_message(status_message, text: str) -> bool:
     if not status_message:
         return False
@@ -1292,7 +1458,18 @@ async def store_preview_callback(update: Update, context: ContextTypes.DEFAULT_T
 async def revoke_links_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Revoke invite links and clear the private chat with the user."""
     user_id = None
-    for entry in context.job.data:
+    job_data = context.job.data
+    if isinstance(job_data, dict):
+        invite_entries = job_data.get("invite_entries", [])
+        user_id = job_data.get("user_id")
+        countdown_job_name = job_data.get("countdown_job_name")
+        if countdown_job_name:
+            for job in context.application.job_queue.get_jobs_by_name(countdown_job_name):
+                job.schedule_removal()
+    else:
+        invite_entries = job_data or []
+
+    for entry in invite_entries:
         try:
             await context.bot.revoke_chat_invite_link(
                 chat_id=entry["chat_id"],
@@ -1371,11 +1548,7 @@ async def language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return
 
     lang = "en" if query.data == "lang_en" else "es"
-    question, answer = generate_math_problem()
-    pending[user_id] = {"lang": lang, "question": question, "answer": answer}
-    await query.edit_message_text(
-        t(lang, "math_prompt", q=question), parse_mode="Markdown",
-    )
+    await _start_math_challenge(query.message, user_id, lang, edit=True)
 
 
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1409,68 +1582,9 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     lang = pending[user_id]["lang"]
 
-    try:
-        user_answer = int(text)
-    except ValueError:
-        msg = await update.message.reply_text(t(lang, "not_a_number"))
-        _dm_messages.setdefault(user_id, []).append(update.message.message_id)
-        _dm_messages[user_id].append(msg.message_id)
-        return
-
-    if user_answer != pending[user_id]["answer"]:
-        del pending[user_id]
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Try Again", callback_data="retry_captcha")]
-        ])
-        msg = await update.message.reply_text(
-            t(lang, "incorrect"),
-            reply_markup=keyboard,
-        )
-        _dm_messages.setdefault(user_id, []).append(update.message.message_id)
-        _dm_messages[user_id].append(msg.message_id)
-        return
-
-    # Correct
-    del pending[user_id]
-    verified_users[user_id] = time.time()  # Track verification time
-    correct_msg = await update.message.reply_text(t(lang, "correct"))
+    msg = await update.message.reply_text(t(lang, "not_a_number"))
     _dm_messages.setdefault(user_id, []).append(update.message.message_id)
-    _dm_messages[user_id].append(correct_msg.message_id)
-
-    invite_entries: list[dict] = []
-    buttons: list[list[InlineKeyboardButton]] = []
-
-    for gid, gname in zip(GROUP_IDS, GROUP_NAMES):
-        try:
-            invite = await context.bot.create_chat_invite_link(
-                chat_id=gid,
-                expire_date=datetime.now(timezone.utc) + timedelta(seconds=60),
-                creates_join_request=True,
-                name=f"Gateway – {user_id}",
-            )
-            invite_entries.append({"chat_id": gid, "invite_link": invite})
-            buttons.append([
-                InlineKeyboardButton(f"🔗 {gname}", url=invite.invite_link)
-            ])
-            logger.info("Link created → %s (%s) | %s", gid, gname, invite.invite_link)
-        except (Forbidden, BadRequest) as exc:
-            logger.warning("Error creating link in %s (%s): %s", gid, gname, exc)
-
-    if not buttons:
-        msg = await update.message.reply_text(t(lang, "no_links"))
-        _dm_messages.setdefault(user_id, []).append(msg.message_id)
-        return
-
-    links_msg = await update.message.reply_text(
-        t(lang, "links_message"),
-        reply_markup=InlineKeyboardMarkup(buttons),
-    )
-    _dm_messages.setdefault(user_id, []).append(links_msg.message_id)
-
-    context.application.job_queue.run_once(
-        callback=revoke_links_job, when=60, data=invite_entries,
-        name=f"revoke_{user_id}_{datetime.now(timezone.utc).timestamp():.0f}",
-    )
+    _dm_messages[user_id].append(msg.message_id)
 
 
 # ─── Retry captcha callback ─────────────────────────────────────────────────
@@ -1482,12 +1596,46 @@ async def retry_captcha_callback(update: Update, context: ContextTypes.DEFAULT_T
 
     user_id = query.from_user.id
     lang = pending.get(user_id, {}).get("lang", "en")
+    await _start_math_challenge(query.message, user_id, lang, edit=True)
 
-    question, answer = generate_math_problem()
-    pending[user_id] = {"lang": lang, "question": question, "answer": answer}
+
+async def math_answer_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    if query.message.chat.type != "private":
+        return
+
+    user_id = query.from_user.id
+    flow = pending.get(user_id)
+    if not flow or "answer" not in flow:
+        lang = pending.get(user_id, {}).get("lang", "en")
+        await query.edit_message_text(t(lang, "no_pending"))
+        return
+
+    lang = flow.get("lang", "en")
+
+    try:
+        selected_answer = int(query.data.replace("math_answer_", "", 1))
+    except ValueError:
+        return
+
+    if selected_answer != flow.get("answer"):
+        pending[user_id] = {"lang": lang}
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔄 Try Again", callback_data="retry_captcha")]
+        ])
+        await query.edit_message_text(
+            "❌ Incorrect answer.\nUse /start to try again with a new problem.",
+            reply_markup=keyboard,
+        )
+        return
+
+    pending.pop(user_id, None)
     await query.edit_message_text(
-        t(lang, "math_prompt", q=question), parse_mode="Markdown",
+        "✅ Well done! That’s correct! 🎉 I’m now generating your invite links... 🚀"
     )
+    await _complete_gateway_success(update, context, user_id, lang)
 
 
 async def handle_private_media(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -2051,6 +2199,9 @@ def main() -> None:
     )
     application.add_handler(
         CallbackQueryHandler(retry_captcha_callback, pattern=r"^retry_captcha$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(math_answer_callback, pattern=r"^math_answer_-?\d+$")
     )
     application.add_handler(
         CallbackQueryHandler(store_country_callback, pattern=r"^store_country_(US|CA|UK|EU|AUS|MX)$")
