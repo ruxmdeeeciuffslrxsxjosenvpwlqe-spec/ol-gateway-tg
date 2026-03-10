@@ -1,0 +1,7 @@
+schemaVersion: 1.0
+endpoints:
+  - name: default-endpoint
+    port: 10000
+    type: REST
+    networkVisibility: Public
+    context: /
