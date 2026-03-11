@@ -197,7 +197,18 @@ STORE_METHODS: dict[str, str] = {
 
 STORE_WATERMARK = "𝐎𝐋𝐈𝐌𝐏𝐎 Watermarked."
 
-VOUCHES_TOPIC_ID: int = int(os.environ.get("VOUCHES_TOPIC_ID", "0"))
+def _parse_vouches_topic_id() -> int:
+    """Accept a full t.me URL (https://t.me/c/<chat>/<thread>) or a plain integer."""
+    raw = os.environ.get("VOUCHES_TOPIC_ID", "").strip()
+    m = re.match(r"https?://t\.me/c/\d+/(\d+)", raw)
+    if m:
+        return int(m.group(1))
+    try:
+        return int(raw)
+    except ValueError:
+        return 0
+
+VOUCHES_TOPIC_ID: int = _parse_vouches_topic_id()
 
 # Registry for vouch report callbacks: {vouch_id -> vouch_data}
 _vouch_registry: dict[str, dict] = {}
