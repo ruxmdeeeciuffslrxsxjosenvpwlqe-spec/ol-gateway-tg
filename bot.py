@@ -15,10 +15,9 @@ import time
 from html import escape
 from datetime import datetime, timedelta, timezone
 
-try:
-    import httpx as _httpx
-except ImportError:
-    _httpx = None
+import asyncio as _asyncio
+import json as _json
+import urllib.request as _urllib_request
 
 from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -614,18 +613,21 @@ async def _custom_dynamic_message_job(context: ContextTypes.DEFAULT_TYPE) -> Non
 
 
 async def _get_bitcoin_price() -> str:
-    """Fetch current BTC/USD price from CoinGecko."""
+    """Fetch current BTC/USD price from Coinbase (no API key required)."""
+    def _fetch() -> str:
+        req = _urllib_request.Request(
+            "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        with _urllib_request.urlopen(req, timeout=6) as resp:
+            data = _json.loads(resp.read())
+            price = float(data["data"]["amount"])
+            return f"${price:,.0f}"
     try:
-        if _httpx is None:
-            return "N/A"
-        async with _httpx.AsyncClient(timeout=5.0) as client:
-            r = await client.get(
-                "https://api.coingecko.com/api/v3/simple/price",
-                params={"ids": "bitcoin", "vs_currencies": "usd"},
-            )
-            data = r.json()
-            price = int(data["bitcoin"]["usd"])
-            return f"${price:,}"
+        return await _asyncio.wait_for(
+            _asyncio.get_event_loop().run_in_executor(None, _fetch),
+            timeout=7,
+        )
     except Exception:
         return "N/A"
 
