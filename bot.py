@@ -2466,18 +2466,53 @@ async def ping_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 HELP_OWNER_USERNAME = "gordo"
 
-HELP_TEXT = """
-\U0001f916 <b>Gateway TG \u2014 Admin Commands</b>
+HELP_TEXT = (
+    "\U0001f916 <b>Gateway TG \u2014 Command Reference</b>\n"
+    "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n"
 
-<b>\U0001f451 Admin</b>  /promote /demote /adminlist /admincache /anonadmin /adminerror
-<b>\U0001f30a Flood</b>  /flood /setflood /setfloodtimer /floodmode /clearflood
-<b>\U0001f6e1 Raid</b>  /antiraid /raidtime /raidactiontime /autoantiraid
-<b>\u2705 Approve</b>  /approval /approve /unapprove /approved /unapproveall
-<b>\U0001f528 Bans</b>  /ban /dban /sban /tban /unban /mute /dmute /smute /tmute /unmute /kick /dkick /skick /kickme
-<b>\U0001f6ab Block</b>  /addblocklist /rmblocklist /blocklist /blocklistmode /blocklistdelete
-<b>\U0001f310 Fed</b>  /newfed /joinfed /leavefed /fedban /unfedban /fedadmins /fedpromote /feddemote /fedinfo /fedchats
-<b>\U0001f527 Diag</b>  /chatid /ping /staff .info
-""".strip()
+    "\U0001f4e6 <b>Gateway (DM)</b>\n"
+    "  \u2022 /start \u2014 Begin setup\n"
+    "  \u2022 <code>add store</code> \u2014 Add a store listing\n"
+    "  \u2022 <code>copy messages</code> \u2014 Copy messages\n"
+    "  \u2022 <code>custom message</code> \u2014 Custom message\n\n"
+
+    "\U0001f451 <b>Admin</b>\n"
+    "  \u2022 /promote  /demote\n"
+    "  \u2022 /adminlist  /admincache\n"
+    "  \u2022 /anonadmin  /adminerror\n\n"
+
+    "\U0001f30a <b>Flood Control</b>\n"
+    "  \u2022 /flood  /setflood  /setfloodtimer\n"
+    "  \u2022 /floodmode  /clearflood\n\n"
+
+    "\U0001f6e1 <b>Anti-Raid</b>\n"
+    "  \u2022 /antiraid  /raidtime\n"
+    "  \u2022 /raidactiontime  /autoantiraid\n\n"
+
+    "\u2705 <b>Approvals</b>\n"
+    "  \u2022 /approval  /approve  /unapprove\n"
+    "  \u2022 /approved  /unapproveall\n\n"
+
+    "\U0001f528 <b>Bans &amp; Mutes</b>\n"
+    "  \u2022 /ban  /dban  /sban  /tban  /unban\n"
+    "  \u2022 /mute  /dmute  /smute  /tmute  /unmute\n"
+    "  \u2022 /kick  /dkick  /skick  /kickme\n\n"
+
+    "\U0001f6ab <b>Blocklists</b>\n"
+    "  \u2022 /addblocklist  /rmblocklist\n"
+    "  \u2022 /blocklist  /blocklistmode\n"
+    "  \u2022 /blocklistdelete\n\n"
+
+    "\U0001f310 <b>Federations</b>\n"
+    "  \u2022 /newfed  /joinfed  /leavefed\n"
+    "  \u2022 /fedban  /unfedban\n"
+    "  \u2022 /fedadmins  /fedpromote  /feddemote\n"
+    "  \u2022 /fedinfo  /fedchats\n\n"
+
+    "\U0001f527 <b>Diagnostics</b>\n"
+    "  \u2022 /chatid  /ping  /staff\n"
+    "  \u2022 <code>.info</code> @user \u2014 User info card"
+)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
