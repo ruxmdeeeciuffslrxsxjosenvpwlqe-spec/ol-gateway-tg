@@ -2516,11 +2516,10 @@ def main() -> None:
 
     async def _on_application_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
         if isinstance(context.error, Conflict):
-            logger.critical(
-                "Telegram Conflict detected: another bot instance is using this BOT_TOKEN (duplicate polling/getUpdates). "
-                "Stopping this process. Ensure only one active instance runs in polling mode."
+            logger.warning(
+                "Telegram Conflict detected (another instance may be running). "
+                "Will retry automatically."
             )
-            await context.application.stop()
             return
 
         logger.exception("Unhandled application error", exc_info=context.error)
