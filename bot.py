@@ -425,7 +425,7 @@ def _parse_custom_button_specs(raw_text: str) -> tuple[str, list[list[dict[str, 
         button_specs.append([{"text": label, "url": url}])
         return ""
 
-    cleaned_text = re.sub(r"<button>(.*?)<button>", _repl, raw_text, flags=re.IGNORECASE | re.DOTALL)
+    cleaned_text = re.sub(r"<button>(.*?)</button>", _repl, raw_text, flags=re.IGNORECASE | re.DOTALL)
     return cleaned_text, button_specs
 
 

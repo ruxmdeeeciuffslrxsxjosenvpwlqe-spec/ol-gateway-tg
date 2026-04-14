@@ -157,6 +157,10 @@ async def captcha_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     chat_id = query.message.chat.id
     lang = get_chat_lang(chat_id)
 
+    # Answer the callback query FIRST — before any message edits/deletes —
+    # to avoid Telegram rejecting the answer after the message is gone.
+    await query.answer(t(lang, "captcha_verified"))
+
     # Unrestrict the user
     try:
         await context.bot.restrict_chat_member(
@@ -172,6 +176,4 @@ async def captcha_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         pass
 
     _pending_verify.pop((chat_id, target_user_id), None)
-
-    await query.answer(t(lang, "captcha_verified"))
     logger.info("User %s verified in chat %s", target_user_id, chat_id)
