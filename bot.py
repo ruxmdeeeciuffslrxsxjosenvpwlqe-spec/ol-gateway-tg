@@ -2469,48 +2469,19 @@ HELP_OWNER_USERNAME = "gordo"
 HELP_TEXT = """
 \U0001f916 <b>Gateway TG \u2014 Admin Commands</b>
 
-<b>\U0001f451 Admin Management</b>
-/promote /demote /adminlist /admincache
-/anonadmin /adminerror
-
-<b>\U0001f30a Antiflood</b>
-/flood /setflood /setfloodtimer /floodmode /clearflood
-
-<b>\U0001f6e1 Antiraid</b>
-/antiraid /raidtime /raidactiontime /autoantiraid
-
-<b>\u2705 Approvals</b>
-/approval /approve /unapprove /approved /unapproveall
-
-<b>\U0001f528 Bans &amp; Mutes</b>
-/ban /dban /sban /tban /unban
-/mute /dmute /smute /tmute /unmute
-/kick /dkick /skick /kickme
-.mute .unmute .warning
-
-<b>\U0001f6ab Blocklists</b>
-/addblocklist /rmblocklist /blocklist
-/blocklistmode /blocklistdelete
-/setblocklistreason /resetblocklistreason
-/unblocklistall
-
-<b>\U0001f310 Federations</b>
-/newfed /joinfed /leavefed
-/fedban /unfedban /fedadmins
-/fedpromote /feddemote /fedinfo /fedchats
-
-<b>\U0001f527 Diagnostics</b>
-/chatid /ping /staff .info
-
-<b>\U0001f6cd Store Tools (DM)</b>
-Type <code>admin addstore</code>
-Type <code>admin copymessages</code>
-Type <code>admin custommessage</code>
+<b>\U0001f451 Admin</b>  /promote /demote /adminlist /admincache /anonadmin /adminerror
+<b>\U0001f30a Flood</b>  /flood /setflood /setfloodtimer /floodmode /clearflood
+<b>\U0001f6e1 Raid</b>  /antiraid /raidtime /raidactiontime /autoantiraid
+<b>\u2705 Approve</b>  /approval /approve /unapprove /approved /unapproveall
+<b>\U0001f528 Bans</b>  /ban /dban /sban /tban /unban /mute /dmute /smute /tmute /unmute /kick /dkick /skick /kickme
+<b>\U0001f6ab Block</b>  /addblocklist /rmblocklist /blocklist /blocklistmode /blocklistdelete
+<b>\U0001f310 Fed</b>  /newfed /joinfed /leavefed /fedban /unfedban /fedadmins /fedpromote /feddemote /fedinfo /fedchats
+<b>\U0001f527 Diag</b>  /chatid /ping /staff .info
 """.strip()
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """/help \u2014 show all admin commands. Restricted to @gordo."""
+    """/help \u2014 restricted to @gordo."""
     user = update.effective_user
     if not user or (user.username or "").lower() != HELP_OWNER_USERNAME.lower():
         return
@@ -2789,10 +2760,7 @@ def main() -> None:
         name="manual_approval_welcome_checker",
     )
 
-    logger.info("Bot started — waiting for messages...")
-
-    # Always use polling mode (webhook mode is unreliable on Railway free tier)
-    logger.info("Running in POLLING mode")
+    logger.info("Bot started — forcing POLLING mode (ignoring RAILWAY_PUBLIC_DOMAIN)")
     try:
         application.run_polling(
             drop_pending_updates=True,
@@ -2805,11 +2773,15 @@ def main() -> None:
         )
     except Conflict:
         logger.critical(
-            "Telegram Conflict detected at startup. Another instance is already using this BOT_TOKEN. "
-            "Stop duplicate instances and restart only one bot process."
+            "Telegram Conflict: another bot instance is using this BOT_TOKEN. "
+            "Stop all other instances and restart."
         )
         raise SystemExit(1)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        logger.critical("FATAL: main() crashed: %s", exc, exc_info=True)
+        raise
