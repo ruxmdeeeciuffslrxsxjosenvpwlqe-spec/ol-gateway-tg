@@ -273,6 +273,32 @@ def _store_notes_keyboard() -> InlineKeyboardMarkup:
     ])
 
 
+def _store_destination_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("🇺🇸 USA", callback_data="store_destination_USA"),
+            InlineKeyboardButton("🇨🇦 CA",  callback_data="store_destination_CA"),
+        ],
+        [
+            InlineKeyboardButton("🇬🇧 UK",  callback_data="store_destination_UK"),
+            InlineKeyboardButton("🇪🇺 EU",  callback_data="store_destination_EU"),
+        ],
+        [
+            InlineKeyboardButton("ROS/ROD", callback_data="store_destination_ROSROD"),
+        ],
+    ])
+
+
+# Maps each destination shortcode to a t.me section link.
+_STORE_DESTINATION_URLS: dict[str, str] = {
+    "USA":    "https://t.me/c/3857658928/148",
+    "CA":     "https://t.me/c/3857658928/147",
+    "UK":     "https://t.me/c/3857658928/146",
+    "EU":     "https://t.me/c/3857658928/145",
+    "ROSROD": "https://t.me/c/3857658928/144",
+}
+
+
 def _store_preview_keyboard(store_url: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("Visit Store", url=store_url)],
@@ -425,7 +451,7 @@ def _parse_custom_button_specs(raw_text: str) -> tuple[str, list[list[dict[str, 
         button_specs.append([{"text": label, "url": url}])
         return ""
 
-    cleaned_text = re.sub(r"<button>(.*?)</button>", _repl, raw_text, flags=re.IGNORECASE | re.DOTALL)
+    cleaned_text = re.sub(r"<button>(.*?)<button>", _repl, raw_text, flags=re.IGNORECASE | re.DOTALL)
     return cleaned_text, button_specs
 
 
@@ -1530,8 +1556,8 @@ async def _handle_add_store_text(update: Update, context: ContextTypes.DEFAULT_T
         await _reply_text_tracked(
             update.message,
             user_id,
-            "🚀 Ready to Post? Please provide me the URL of the group/section. | Example: <code>https://t.me/c/3857658928/148</code>",
-            parse_mode="HTML",
+            "🚀 Ready to Post? Choose the section to post to:",
+            reply_markup=_store_destination_keyboard(),
         )
         return True
 
@@ -1681,8 +1707,17 @@ async def _handle_add_store_media(update: Update) -> bool:
     elif message.document and (message.document.mime_type or "").startswith("image/"):
         data["image_type"] = "document"
         data["image"] = message.document.file_id
+    elif message.text and message.text.strip().startswith(("http://", "https://")):
+        # Accept a direct image URL instead of a file upload
+        data["image_type"] = "url"
+        data["image"] = message.text.strip()
     else:
-        await _reply_text_tracked(update.message, user_id, "📸 Please upload the <b>store logo.</b>", parse_mode="HTML")
+        await _reply_text_tracked(
+            update.message,
+            user_id,
+            "📸 Please upload the <b>store logo</b> or send a direct image URL (https://...).",
+            parse_mode="HTML",
+        )
         return True
 
     flow["step"] = "store_url"
@@ -1796,9 +1831,39 @@ async def store_notes_na_callback(update: Update, context: ContextTypes.DEFAULT_
     await _reply_text_tracked(
         query.message,
         user_id,
-        "🚀 Ready to Post? Please provide me the URL of the group/section. | Example: <code>https://t.me/c/3857658928/148</code>",
-        parse_mode="HTML",
+        "🚀 Ready to Post? Choose the section to post to:",
+        reply_markup=_store_destination_keyboard(),
     )
+
+
+async def store_destination_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    if query.message.chat.type != "private":
+        return
+
+    user_id = query.from_user.id
+    flow = pending.get(user_id)
+    if not flow or flow.get("mode") != "add_store" or flow.get("step") != "destination":
+        return
+
+    shortcode = query.data.replace("store_destination_", "", 1)
+    section_url = _STORE_DESTINATION_URLS.get(shortcode)
+    if not section_url:
+        return
+
+    parsed = _parse_target_link(section_url)
+    if not parsed:
+        return
+
+    target_chat_id, reply_to_message_id, message_thread_id = parsed
+    data = flow.setdefault("data", {})
+    data["target_chat_id"] = target_chat_id
+    data["target_reply_to"] = reply_to_message_id
+    data["target_thread_id"] = message_thread_id
+
+    await _send_add_store_preview(update, context)
 
 
 async def store_preview_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1904,6 +1969,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     # Block users banned from any configured group
+    from telegram.error import TelegramError as _TGE
     for gid in GROUP_IDS:
         try:
             member = await context.bot.get_chat_member(gid, user_id)
@@ -1912,7 +1978,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                     "I'm sorry, you are not allowed to use this bot at this moment."
                 )
                 return
-        except (BadRequest, Forbidden):
+        except _TGE:
             continue
 
     keyboard = InlineKeyboardMarkup([
@@ -2459,67 +2525,107 @@ async def chatid_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     )
 
 
-async def ping_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Simple liveness check."""
-    await update.message.reply_text("\U0001f3d3 pong")
+# ─── Ping command (diagnostic) ──────────────────────────────────────────────
 
+async def ping_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/ping — simple liveness check."""
+    await update.message.reply_text("🏓 pong")
+
+
+# ─── Help command (owner only) ───────────────────────────────────────────────
 
 HELP_OWNER_USERNAME = "gordo"
 
-HELP_TEXT = (
-    "\U0001f916 <b>Gateway TG \u2014 Command Reference</b>\n"
-    "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n"
+HELP_TEXT = """
+🤖 <b>Gateway TG — Admin Commands</b>
 
-    "\U0001f4e6 <b>Gateway (DM only)</b>\n"
-    "  \u2022 <code>/start</code> \u2014 Begin setup flow\n"
-    "  \u2022 <code>admin-addstore</code> \u2014 Add a store\n"
-    "  \u2022 <code>admin-copymessages</code> \u2014 Copy messages\n"
-    "  \u2022 <code>admin-custommessage</code> \u2014 Custom message\n\n"
+<b>👑 Admin Management</b>
+/promote — Promote a user to admin
+/demote — Demote an admin to member
+/adminlist — List all admins in the chat
+/admincache — Force-refresh the admin cache
+/anonadmin &lt;on|off&gt; — Toggle anonymous admin mode
+/adminerror &lt;on|off&gt; — Toggle "not admin" error messages
 
-    "\U0001f451 <b>Admin</b>\n"
-    "  \u2022 <code>/promote</code>  <code>/demote</code>\n"
-    "  \u2022 <code>/adminlist</code>  <code>/admincache</code>\n"
-    "  \u2022 <code>/anonadmin</code>  <code>/adminerror</code>\n\n"
+<b>🌊 Antiflood</b>
+/flood — Show current flood settings
+/setflood &lt;N&gt; — Set max messages before action
+/setfloodtimer &lt;seconds&gt; — Set the flood time window
+/floodmode &lt;ban|kick|mute|tban|tmute&gt; — Set flood action
+/clearflood — Reset flood counters
 
-    "\U0001f30a <b>Flood Control</b>\n"
-    "  \u2022 <code>/flood</code>  <code>/setflood</code>  <code>/setfloodtimer</code>\n"
-    "  \u2022 <code>/floodmode</code>  <code>/clearflood</code>\n\n"
+<b>🛡 Antiraid</b>
+/antiraid &lt;on|off&gt; — Toggle raid mode
+/raidtime &lt;seconds&gt; — How long a raid is considered active
+/raidactiontime &lt;seconds&gt; — Time window to detect a raid
+/autoantiraid &lt;on|off&gt; — Toggle automatic raid detection
 
-    "\U0001f6e1 <b>Anti-Raid</b>\n"
-    "  \u2022 <code>/antiraid</code>  <code>/raidtime</code>\n"
-    "  \u2022 <code>/raidactiontime</code>  <code>/autoantiraid</code>\n\n"
+<b>✅ Approvals</b>
+/approval — Show join-approval settings
+/approve &lt;user&gt; — Pre-approve a user
+/unapprove &lt;user&gt; — Remove pre-approval
+/approved — List approved users
+/unapproveall — Remove all pre-approvals
 
-    "\u2705 <b>Approvals</b>\n"
-    "  \u2022 <code>/approval</code>  <code>/approve</code>  <code>/unapprove</code>\n"
-    "  \u2022 <code>/approved</code>  <code>/unapproveall</code>\n\n"
+<b>🔨 Bans &amp; Mutes</b>
+/ban &lt;user&gt; — Ban a user
+/dban &lt;user&gt; — Delete message + ban
+/sban &lt;user&gt; — Silent ban
+/tban &lt;user&gt; &lt;time&gt; — Temp-ban (e.g. 1h, 1d)
+/unban &lt;user&gt; — Unban a user
+/mute &lt;user&gt; or .mute &lt;time&gt; — Mute a user
+/dmute — Delete message + mute
+/smute — Silent mute
+/tmute &lt;user&gt; &lt;time&gt; — Temp-mute
+/unmute &lt;user&gt; or .unmute — Unmute a user
+/kick &lt;user&gt; — Kick a user
+/dkick — Delete message + kick
+/skick — Silent kick
+/kickme — Kick yourself (test)
+.warning — Reply to warn a user (3 warns = ban)
 
-    "\U0001f528 <b>Bans &amp; Mutes</b>\n"
-    "  \u2022 <code>/ban</code>  <code>/dban</code>  <code>/sban</code>  <code>/tban</code>  <code>/unban</code>\n"
-    "  \u2022 <code>/mute</code>  <code>/dmute</code>  <code>/smute</code>  <code>/tmute</code>  <code>/unmute</code>\n"
-    "  \u2022 <code>/kick</code>  <code>/dkick</code>  <code>/skick</code>  <code>/kickme</code>\n\n"
+<b>🚫 Blocklists</b>
+/addblocklist &lt;word&gt; — Add a blocked word/phrase
+/rmblocklist &lt;word&gt; — Remove a blocked word
+/blocklist — Show current blocklist
+/blocklistmode &lt;action&gt; — Set blocklist action
+/blocklistdelete &lt;on|off&gt; — Delete blocked messages
+/setblocklistreason — Set blocklist ban reason
+/resetblocklistreason — Reset blocklist ban reason
+/unblocklistall — Clear all blocked words
 
-    "\U0001f6ab <b>Blocklists</b>\n"
-    "  \u2022 <code>/addblocklist</code>  <code>/rmblocklist</code>\n"
-    "  \u2022 <code>/blocklist</code>  <code>/blocklistmode</code>\n"
-    "  \u2022 <code>/blocklistdelete</code>\n\n"
+<b>🌐 Federations</b>
+/newfed &lt;name&gt; — Create a federation
+/joinfed &lt;fed_id&gt; — Join a federation
+/leavefed — Leave the current federation
+/fedban &lt;user&gt; — Fed-ban a user
+/unfedban &lt;user&gt; — Remove a fed-ban
+/fedadmins — List federation admins
+/fedpromote &lt;user&gt; — Promote to federation admin
+/feddemote &lt;user&gt; — Demote a federation admin
+/fedinfo — Show federation info
+/fedchats — List chats in the federation
 
-    "\U0001f310 <b>Federations</b>\n"
-    "  \u2022 <code>/newfed</code>  <code>/joinfed</code>  <code>/leavefed</code>\n"
-    "  \u2022 <code>/fedban</code>  <code>/unfedban</code>\n"
-    "  \u2022 <code>/fedadmins</code>  <code>/fedpromote</code>  <code>/feddemote</code>\n"
-    "  \u2022 <code>/fedinfo</code>  <code>/fedchats</code>\n\n"
+<b>👥 Welcome &amp; Info</b>
+/staff — Show the staff list
+/info &lt;user&gt; or .info — Show user info &amp; warns
 
-    "\U0001f527 <b>Diagnostics</b>\n"
-    "  \u2022 <code>/chatid</code>  <code>/ping</code>  <code>/staff</code>\n"
-    "  \u2022 <code>.info</code> @user \u2014 User info card"
-)
+<b>🔧 Diagnostics</b>
+/chatid — Show current chat ID and type
+
+<b>🛍 Store Tools (DM only)</b>
+Type <code>admin addstore</code> — Add a store listing
+Type <code>admin copymessages</code> — Copy messages between sections
+Type <code>admin custommessage</code> — Send a custom formatted message
+""".strip()
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """/help \u2014 restricted to @gordo."""
+    """/help — show all admin commands. Restricted to @gordo only."""
     user = update.effective_user
     if not user or (user.username or "").lower() != HELP_OWNER_USERNAME.lower():
-        return
+        return  # silently ignore everyone else
+
     await update.message.reply_text(HELP_TEXT, parse_mode="HTML")
 
 
@@ -2551,16 +2657,16 @@ def main() -> None:
 
     async def _on_application_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
         if isinstance(context.error, Conflict):
-            logger.warning(
-                "Telegram Conflict detected (another instance may be running). "
-                "Will retry automatically."
+            logger.critical(
+                "Telegram Conflict detected: another bot instance is using this BOT_TOKEN (duplicate polling/getUpdates). "
+                "Stopping this process. Ensure only one active instance runs in polling mode."
             )
+            await context.application.stop()
             return
 
         logger.exception("Unhandled application error", exc_info=context.error)
 
     application.add_error_handler(_on_application_error)
-
 
     # ── Gateway (DM) ─────────────────────────────────────────────────────
     application.add_handler(CommandHandler("start", start_command))
@@ -2704,6 +2810,12 @@ def main() -> None:
         CallbackQueryHandler(store_notes_na_callback, pattern=r"^store_notes_na$")
     )
     application.add_handler(
+        CallbackQueryHandler(
+            store_destination_callback,
+            pattern=r"^store_destination_(USA|CA|UK|EU|ROSROD)$",
+        )
+    )
+    application.add_handler(
         CallbackQueryHandler(store_preview_callback, pattern=r"^store_preview_(confirm|cancel)$")
     )
     application.add_handler(
@@ -2795,21 +2907,54 @@ def main() -> None:
         name="manual_approval_welcome_checker",
     )
 
-    logger.info("Bot started — forcing POLLING mode (ignoring RAILWAY_PUBLIC_DOMAIN)")
-    application.run_polling(
-        drop_pending_updates=True,
-        allowed_updates=[
-            "message", "edited_message", "channel_post", "edited_channel_post",
-            "inline_query", "chosen_inline_result", "callback_query",
-            "shipping_query", "pre_checkout_query", "poll", "poll_answer",
-            "my_chat_member", "chat_member", "chat_join_request",
-        ]
-    )
+    logger.info("Bot started — waiting for messages...")
+
+    # Detect Railway environment for webhook mode
+    RAILWAY_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+    PORT = int(os.environ.get("PORT", "8080"))
+
+    if RAILWAY_DOMAIN:
+        # Webhook mode for Railway (only if a public domain is assigned)
+        webhook_url = f"https://{RAILWAY_DOMAIN}/webhook"
+        logger.info(f"Running in WEBHOOK mode on port {PORT} → {webhook_url}")
+        try:
+            application.run_webhook(
+                listen="0.0.0.0",
+                port=PORT,
+                url_path="webhook",
+                webhook_url=webhook_url,
+                allowed_updates=[
+                    "message", "edited_message", "channel_post", "edited_channel_post",
+                    "inline_query", "chosen_inline_result", "callback_query",
+                    "shipping_query", "pre_checkout_query", "poll", "poll_answer",
+                    "my_chat_member", "chat_member", "chat_join_request",
+                ],
+            )
+        except Conflict:
+            logger.critical(
+                "Telegram Conflict detected at startup. Another instance is already using this BOT_TOKEN. "
+                "Stop duplicate instances (Railway/local/other hosts) and restart only one bot process."
+            )
+            raise SystemExit(1)
+    else:
+        # Polling mode for local development
+        logger.info("Running in POLLING mode (local)")
+        try:
+            application.run_polling(
+                allowed_updates=[
+                    "message", "edited_message", "channel_post", "edited_channel_post",
+                    "inline_query", "chosen_inline_result", "callback_query",
+                    "shipping_query", "pre_checkout_query", "poll", "poll_answer",
+                    "my_chat_member", "chat_member", "chat_join_request",
+                ]
+            )
+        except Conflict:
+            logger.critical(
+                "Telegram Conflict detected at startup. Another instance is already using this BOT_TOKEN. "
+                "Stop duplicate instances (local/hosting/CI) and restart only one bot process."
+            )
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as exc:
-        logger.critical("FATAL: main() crashed: %s", exc, exc_info=True)
-        raise
+    main()
