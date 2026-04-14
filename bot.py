@@ -2459,6 +2459,64 @@ async def chatid_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     )
 
 
+async def ping_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Simple liveness check."""
+    await update.message.reply_text("\U0001f3d3 pong")
+
+
+HELP_OWNER_USERNAME = "gordo"
+
+HELP_TEXT = """
+\U0001f916 <b>Gateway TG \u2014 Admin Commands</b>
+
+<b>\U0001f451 Admin Management</b>
+/promote /demote /adminlist /admincache
+/anonadmin /adminerror
+
+<b>\U0001f30a Antiflood</b>
+/flood /setflood /setfloodtimer /floodmode /clearflood
+
+<b>\U0001f6e1 Antiraid</b>
+/antiraid /raidtime /raidactiontime /autoantiraid
+
+<b>\u2705 Approvals</b>
+/approval /approve /unapprove /approved /unapproveall
+
+<b>\U0001f528 Bans &amp; Mutes</b>
+/ban /dban /sban /tban /unban
+/mute /dmute /smute /tmute /unmute
+/kick /dkick /skick /kickme
+.mute .unmute .warning
+
+<b>\U0001f6ab Blocklists</b>
+/addblocklist /rmblocklist /blocklist
+/blocklistmode /blocklistdelete
+/setblocklistreason /resetblocklistreason
+/unblocklistall
+
+<b>\U0001f310 Federations</b>
+/newfed /joinfed /leavefed
+/fedban /unfedban /fedadmins
+/fedpromote /feddemote /fedinfo /fedchats
+
+<b>\U0001f527 Diagnostics</b>
+/chatid /ping /staff .info
+
+<b>\U0001f6cd Store Tools (DM)</b>
+Type <code>admin addstore</code>
+Type <code>admin copymessages</code>
+Type <code>admin custommessage</code>
+""".strip()
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """/help \u2014 show all admin commands. Restricted to @gordo."""
+    user = update.effective_user
+    if not user or (user.username or "").lower() != HELP_OWNER_USERNAME.lower():
+        return
+    await update.message.reply_text(HELP_TEXT, parse_mode="HTML")
+
+
 # ─── Main ────────────────────────────────────────────────────────────────────
 
 GROUP_FILTER = filters.ChatType.GROUP | filters.ChatType.SUPERGROUP
@@ -2604,7 +2662,9 @@ def main() -> None:
     application.add_handler(CommandHandler("staff", staff_command))
 
     # ── Diagnostic ───────────────────────────────────────────────────────
+    application.add_handler(CommandHandler("ping", ping_command))
     application.add_handler(CommandHandler("chatid", chatid_command))
+    application.add_handler(CommandHandler("help", help_command))
 
     # ── Callback query handlers for captcha + info + retry ─────────────
     application.add_handler(
@@ -2731,51 +2791,24 @@ def main() -> None:
 
     logger.info("Bot started — waiting for messages...")
 
-    # Detect Railway environment for webhook mode
-    RAILWAY_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN")
-    PORT = int(os.environ.get("PORT", "8080"))
-
-    if RAILWAY_DOMAIN:
-        # Webhook mode for Railway (only if a public domain is assigned)
-        webhook_url = f"https://{RAILWAY_DOMAIN}/webhook"
-        logger.info(f"Running in WEBHOOK mode on port {PORT} → {webhook_url}")
-        try:
-            application.run_webhook(
-                listen="0.0.0.0",
-                port=PORT,
-                url_path="webhook",
-                webhook_url=webhook_url,
-                allowed_updates=[
-                    "message", "edited_message", "channel_post", "edited_channel_post",
-                    "inline_query", "chosen_inline_result", "callback_query",
-                    "shipping_query", "pre_checkout_query", "poll", "poll_answer",
-                    "my_chat_member", "chat_member", "chat_join_request",
-                ],
-            )
-        except Conflict:
-            logger.critical(
-                "Telegram Conflict detected at startup. Another instance is already using this BOT_TOKEN. "
-                "Stop duplicate instances (Railway/local/other hosts) and restart only one bot process."
-            )
-            raise SystemExit(1)
-    else:
-        # Polling mode for local development
-        logger.info("Running in POLLING mode (local)")
-        try:
-            application.run_polling(
-                allowed_updates=[
-                    "message", "edited_message", "channel_post", "edited_channel_post",
-                    "inline_query", "chosen_inline_result", "callback_query",
-                    "shipping_query", "pre_checkout_query", "poll", "poll_answer",
-                    "my_chat_member", "chat_member", "chat_join_request",
-                ]
-            )
-        except Conflict:
-            logger.critical(
-                "Telegram Conflict detected at startup. Another instance is already using this BOT_TOKEN. "
-                "Stop duplicate instances (local/hosting/CI) and restart only one bot process."
-            )
-            raise SystemExit(1)
+    # Always use polling mode (webhook mode is unreliable on Railway free tier)
+    logger.info("Running in POLLING mode")
+    try:
+        application.run_polling(
+            drop_pending_updates=True,
+            allowed_updates=[
+                "message", "edited_message", "channel_post", "edited_channel_post",
+                "inline_query", "chosen_inline_result", "callback_query",
+                "shipping_query", "pre_checkout_query", "poll", "poll_answer",
+                "my_chat_member", "chat_member", "chat_join_request",
+            ]
+        )
+    except Conflict:
+        logger.critical(
+            "Telegram Conflict detected at startup. Another instance is already using this BOT_TOKEN. "
+            "Stop duplicate instances and restart only one bot process."
+        )
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
