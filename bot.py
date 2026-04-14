@@ -2527,6 +2527,7 @@ def main() -> None:
 
     application.add_error_handler(_on_application_error)
 
+
     # ── Gateway (DM) ─────────────────────────────────────────────────────
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(
@@ -2761,22 +2762,15 @@ def main() -> None:
     )
 
     logger.info("Bot started — forcing POLLING mode (ignoring RAILWAY_PUBLIC_DOMAIN)")
-    try:
-        application.run_polling(
-            drop_pending_updates=True,
-            allowed_updates=[
-                "message", "edited_message", "channel_post", "edited_channel_post",
-                "inline_query", "chosen_inline_result", "callback_query",
-                "shipping_query", "pre_checkout_query", "poll", "poll_answer",
-                "my_chat_member", "chat_member", "chat_join_request",
-            ]
-        )
-    except Conflict:
-        logger.critical(
-            "Telegram Conflict: another bot instance is using this BOT_TOKEN. "
-            "Stop all other instances and restart."
-        )
-        raise SystemExit(1)
+    application.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=[
+            "message", "edited_message", "channel_post", "edited_channel_post",
+            "inline_query", "chosen_inline_result", "callback_query",
+            "shipping_query", "pre_checkout_query", "poll", "poll_answer",
+            "my_chat_member", "chat_member", "chat_join_request",
+        ]
+    )
 
 
 if __name__ == "__main__":
