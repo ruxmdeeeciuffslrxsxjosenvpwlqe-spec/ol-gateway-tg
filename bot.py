@@ -225,66 +225,66 @@ def generate_math_problem() -> tuple[str, int]:
 def _store_country_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("USA", callback_data="store_country_US"),
-            InlineKeyboardButton("CA", callback_data="store_country_CA"),
-            InlineKeyboardButton("UK", callback_data="store_country_UK"),
+            InlineKeyboardButton("🟦 🇺🇸 USA", callback_data="store_country_US"),
+            InlineKeyboardButton("🟥 🇨🇦 CA", callback_data="store_country_CA"),
+            InlineKeyboardButton("🟥 🇬🇧 UK", callback_data="store_country_UK"),
         ],
         [
-            InlineKeyboardButton("EU", callback_data="store_country_EU"),
-            InlineKeyboardButton("AUS", callback_data="store_country_AUS"),
-            InlineKeyboardButton("MX", callback_data="store_country_MX"),
+            InlineKeyboardButton("🟦 🇪🇺 EU", callback_data="store_country_EU"),
+            InlineKeyboardButton("🟩 🇦🇺 AUS", callback_data="store_country_AUS"),
+            InlineKeyboardButton("🟩 🇲🇽 MX", callback_data="store_country_MX"),
         ],
     ])
 
 
 def _store_timeframe_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Instant", callback_data="store_timeframe_TF_INSTANT")],
-        [InlineKeyboardButton("1-5 Days", callback_data="store_timeframe_TF_1_5_DAYS")],
-        [InlineKeyboardButton("7 Days", callback_data="store_timeframe_TF_7_DAYS")],
-        [InlineKeyboardButton("1-2 Weeks", callback_data="store_timeframe_TF_1_2_WEEKS")],
-        [InlineKeyboardButton("2-3 Weeks", callback_data="store_timeframe_TF_2_3_WEEKS")],
-        [InlineKeyboardButton("3-4 Weeks", callback_data="store_timeframe_TF_3_4_WEEKS")],
-        [InlineKeyboardButton("4 Weeks", callback_data="store_timeframe_TF_4_WEEKS")],
+        [InlineKeyboardButton("🟩 Instant", callback_data="store_timeframe_TF_INSTANT")],
+        [InlineKeyboardButton("🟦 1-5 Days", callback_data="store_timeframe_TF_1_5_DAYS")],
+        [InlineKeyboardButton("🟦 7 Days", callback_data="store_timeframe_TF_7_DAYS")],
+        [InlineKeyboardButton("🟨 1-2 Weeks", callback_data="store_timeframe_TF_1_2_WEEKS")],
+        [InlineKeyboardButton("🟨 2-3 Weeks", callback_data="store_timeframe_TF_2_3_WEEKS")],
+        [InlineKeyboardButton("🟧 3-4 Weeks", callback_data="store_timeframe_TF_3_4_WEEKS")],
+        [InlineKeyboardButton("🟥 4 Weeks", callback_data="store_timeframe_TF_4_WEEKS")],
     ])
 
 
 def _store_method_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("FTIDv3", callback_data="store_method_M_FTID_V3")],
-        [InlineKeyboardButton("Weighted FTID", callback_data="store_method_M_WEIGHTED_FTID")],
-        [InlineKeyboardButton("LIT", callback_data="store_method_M_LIT")],
-        [InlineKeyboardButton("DNA", callback_data="store_method_M_DNA")],
-        [InlineKeyboardButton("EB", callback_data="store_method_M_EB")],
-        [InlineKeyboardButton("FTID ROS", callback_data="store_method_M_FTID_ROS")],
-        [InlineKeyboardButton("FTID ROD", callback_data="store_method_M_FTID_ROD")],
-        [InlineKeyboardButton("FTIDNA", callback_data="store_method_M_FTIDNA")],
-        [InlineKeyboardButton("DMG RTS", callback_data="store_method_M_DMG_RTS")],
-        [InlineKeyboardButton("RTS", callback_data="store_method_M_RTS")],
-        [InlineKeyboardButton("UTD", callback_data="store_method_M_UTD")],
-        [InlineKeyboardButton("PTDNA", callback_data="store_method_M_PTDNA")],
-        [InlineKeyboardButton("PEB", callback_data="store_method_M_PEB")],
+        [InlineKeyboardButton("🟦 FTIDv3", callback_data="store_method_M_FTID_V3")],
+        [InlineKeyboardButton("🟦 Weighted FTID", callback_data="store_method_M_WEIGHTED_FTID")],
+        [InlineKeyboardButton("🟩 LIT", callback_data="store_method_M_LIT")],
+        [InlineKeyboardButton("🟩 DNA", callback_data="store_method_M_DNA")],
+        [InlineKeyboardButton("🟨 EB", callback_data="store_method_M_EB")],
+        [InlineKeyboardButton("🟨 FTID ROS", callback_data="store_method_M_FTID_ROS")],
+        [InlineKeyboardButton("🟧 FTID ROD", callback_data="store_method_M_FTID_ROD")],
+        [InlineKeyboardButton("🟧 FTIDNA", callback_data="store_method_M_FTIDNA")],
+        [InlineKeyboardButton("🟥 DMG RTS", callback_data="store_method_M_DMG_RTS")],
+        [InlineKeyboardButton("🟥 RTS", callback_data="store_method_M_RTS")],
+        [InlineKeyboardButton("🟪 UTD", callback_data="store_method_M_UTD")],
+        [InlineKeyboardButton("🟪 PTDNA", callback_data="store_method_M_PTDNA")],
+        [InlineKeyboardButton("🟦 PEB", callback_data="store_method_M_PEB")],
     ])
 
 
 def _store_notes_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("N/A", callback_data="store_notes_na")],
+        [InlineKeyboardButton("🟨 N/A", callback_data="store_notes_na")],
     ])
 
 
 def _store_destination_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🇺🇸 USA", callback_data="store_destination_USA"),
-            InlineKeyboardButton("🇨🇦 CA",  callback_data="store_destination_CA"),
+            InlineKeyboardButton("🟦 🇺🇸 USA", callback_data="store_destination_USA"),
+            InlineKeyboardButton("🟥 🇨🇦 CA",  callback_data="store_destination_CA"),
         ],
         [
-            InlineKeyboardButton("🇬🇧 UK",  callback_data="store_destination_UK"),
-            InlineKeyboardButton("🇪🇺 EU",  callback_data="store_destination_EU"),
+            InlineKeyboardButton("🟥 🇬🇧 UK",  callback_data="store_destination_UK"),
+            InlineKeyboardButton("🟦 🇪🇺 EU",  callback_data="store_destination_EU"),
         ],
         [
-            InlineKeyboardButton("ROS/ROD", callback_data="store_destination_ROSROD"),
+            InlineKeyboardButton("🟧 ROS/ROD", callback_data="store_destination_ROSROD"),
         ],
     ])
 
@@ -301,10 +301,10 @@ _STORE_DESTINATION_URLS: dict[str, str] = {
 
 def _store_preview_keyboard(store_url: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Visit Store", url=store_url)],
+        [InlineKeyboardButton("🟦 Visit Store", url=store_url)],
         [
-            InlineKeyboardButton("✅ Confirm", callback_data="store_preview_confirm"),
-            InlineKeyboardButton("❌ Cancel", callback_data="store_preview_cancel"),
+            InlineKeyboardButton("🟩 ✅ Confirm", callback_data="store_preview_confirm"),
+            InlineKeyboardButton("🟥 ❌ Cancel", callback_data="store_preview_cancel"),
         ],
     ])
 
@@ -423,8 +423,8 @@ def _custom_preview_keyboard(button_specs: list[list[dict[str, str]]]) -> Inline
             for row in button_specs
         ])
     rows.append([
-        InlineKeyboardButton("✅ Confirm", callback_data="custom_preview_confirm"),
-        InlineKeyboardButton("❌ Cancel", callback_data="custom_preview_cancel"),
+        InlineKeyboardButton("🟩 ✅ Confirm", callback_data="custom_preview_confirm"),
+        InlineKeyboardButton("🟥 ❌ Cancel", callback_data="custom_preview_cancel"),
     ])
     return InlineKeyboardMarkup(rows)
 
@@ -792,6 +792,14 @@ def _countdown_bar(seconds_left: int, total_seconds: int = 60, width: int = 12) 
     return f"[{bar}] {percent}%"
 
 
+_START_BUTTON_COLOR_TAGS = ("🟩", "🟦", "🟨", "🟥", "🟧", "🟪")
+
+
+def _with_start_button_color(text: str, index: int) -> str:
+    tag = _START_BUTTON_COLOR_TAGS[index % len(_START_BUTTON_COLOR_TAGS)]
+    return f"{tag} {text}"
+
+
 def _gateway_links_text(seconds_left: int) -> str:
     return (
         f"🔗 Here are your invite links (valid for the next {seconds_left} seconds):\n"
@@ -815,14 +823,20 @@ def _math_answer_options(answer: int) -> list[int]:
     return values
 
 
-def _math_answer_keyboard(options: list[int]) -> InlineKeyboardMarkup:
+def _math_answer_keyboard(options: list[int], answer: int) -> InlineKeyboardMarkup:
     rows: list[list[InlineKeyboardButton]] = []
     for idx in range(0, len(options), 2):
         row_values = options[idx: idx + 2]
-        rows.append([
-            InlineKeyboardButton(str(value), callback_data=f"math_answer_{value}")
-            for value in row_values
-        ])
+        row: list[InlineKeyboardButton] = []
+        for value in row_values:
+            color = "🟩" if value == answer else "🟥"
+            row.append(
+                InlineKeyboardButton(
+                    f"{color} {value}",
+                    callback_data=f"math_answer_{value}",
+                )
+            )
+        rows.append(row)
     return InlineKeyboardMarkup(rows)
 
 
@@ -844,7 +858,7 @@ async def _start_math_challenge(message, user_id: int, lang: str, edit: bool = F
     }
 
     text = t(lang, "math_prompt", q=question)
-    keyboard = _math_answer_keyboard(options)
+    keyboard = _math_answer_keyboard(options, answer)
 
     if edit:
         sent = await message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
@@ -895,7 +909,7 @@ async def _complete_gateway_success(update: Update, context: ContextTypes.DEFAUL
     buttons: list[list[InlineKeyboardButton]] = []
     button_specs: list[list[dict[str, str]]] = []
 
-    for gid, gname in zip(GROUP_IDS, GROUP_NAMES):
+    for idx, (gid, gname) in enumerate(zip(GROUP_IDS, GROUP_NAMES)):
         try:
             invite = await context.bot.create_chat_invite_link(
                 chat_id=gid,
@@ -904,7 +918,13 @@ async def _complete_gateway_success(update: Update, context: ContextTypes.DEFAUL
                 name=f"Gateway – {user_id}",
             )
             invite_entries.append({"chat_id": gid, "invite_link": invite})
-            label = f"🔗 {gname}"
+            _name_lower = gname.strip().lower()
+            if _name_lower == "chat":
+                label = "🟦 🔗 Chat"
+            elif _name_lower == "main":
+                label = "🟨 🔗 VIP Group"
+            else:
+                label = _with_start_button_color(f"🔗 {gname}", idx)
             buttons.append([InlineKeyboardButton(label, url=invite.invite_link)])
             button_specs.append([{"text": label, "url": invite.invite_link}])
             logger.info("Link created → %s (%s) | %s", gid, gname, invite.invite_link)
@@ -1983,8 +2003,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🇺🇸 English", callback_data="lang_en"),
-            InlineKeyboardButton("🇲🇽 Español", callback_data="lang_es"),
+            InlineKeyboardButton("🟦 🇺🇸 English", callback_data="lang_en"),
+            InlineKeyboardButton("🟩 🇲🇽 Español", callback_data="lang_es"),
         ]
     ])
     msg = await update.message.reply_text(
@@ -2092,7 +2112,7 @@ async def math_answer_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     if selected_answer != flow.get("answer"):
         pending[user_id] = {"lang": lang}
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Try Again", callback_data="retry_captcha")]
+            [InlineKeyboardButton("🟦 🔄 Try Again", callback_data="retry_captcha")]
         ])
         await query.edit_message_text(
             "❌ Incorrect answer.\nUse /start to try again with a new problem.",
@@ -2295,8 +2315,8 @@ async def mute_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     buttons = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🔑 Permissions", callback_data=f"info_perms_{target.id}"),
-            InlineKeyboardButton("✅ Unmute", callback_data=f"unmute_{target.id}"),
+            InlineKeyboardButton("🟦 🔑 Permissions", callback_data=f"info_perms_{target.id}"),
+            InlineKeyboardButton("🟩 ✅ Unmute", callback_data=f"unmute_{target.id}"),
         ]
     ])
 
