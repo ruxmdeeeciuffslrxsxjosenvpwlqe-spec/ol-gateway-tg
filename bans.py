@@ -101,7 +101,7 @@ async def ban_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             f"• Reason: {reason}"
         )
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("✅ Unban", callback_data=f"unban_{user_id}")]
+            [InlineKeyboardButton("🟩 ✅ Unban", callback_data=f"unban_{user_id}")]
         ])
         await update.message.reply_text(ban_text, reply_markup=buttons, parse_mode="Markdown")
     except (BadRequest, Forbidden) as exc:
@@ -426,10 +426,5 @@ async def unban_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await context.bot.unban_chat_member(chat_id, target_uid, only_if_banned=True)
         _ban_reasons.pop((chat_id, target_uid), None)
         await query.answer("\u2705 User unbanned.", show_alert=True)
-        # Remove the Unban button so it can't be clicked again
-        try:
-            await query.message.edit_reply_markup(reply_markup=None)
-        except (BadRequest, Forbidden):
-            pass
     except (BadRequest, Forbidden) as exc:
         await query.answer(f"Error: {exc}", show_alert=True)
