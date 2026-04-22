@@ -5,7 +5,7 @@ welcome.py — Welcome messages, user tracking, and .info command.
 import logging
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from telegram import (
     InlineKeyboardButton,
@@ -19,6 +19,8 @@ from admin import admin_only, get_chat_lang, is_admin
 from strings import t
 
 logger = logging.getLogger(__name__)
+
+EST = timezone(timedelta(hours=-5), name="EST")
 
 # ─── User data store ────────────────────────────────────────────────────────
 # {chat_id: {user_id: {first_name, last_name, username, join_date, msg_count,
@@ -338,15 +340,20 @@ async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     warns = target_data.get("warns", 0)
     join_date = target_data.get("join_date")
-    join_str = join_date.strftime("%d %b %Y, %H:%M") if join_date else "Unknown"
+    if join_date:
+        if join_date.tzinfo is None:
+            join_date = join_date.replace(tzinfo=timezone.utc)
+        join_str = join_date.astimezone(EST).strftime("%d %b %Y, %I:%M %p EST")
+    else:
+        join_str = "Unknown"
     lang_code = target_data.get("lang_code", "")
     lang_display = _lang_display(lang_code)
     msg_count = target_data.get("msg_count", 0)
 
     last_msg_ts = target_data.get("last_msg_time", 0)
     if last_msg_ts > 0:
-        last_msg_str = datetime.fromtimestamp(last_msg_ts, timezone.utc).strftime(
-            "%b %d, %Y, %H:%M"
+        last_msg_str = datetime.fromtimestamp(last_msg_ts, EST).strftime(
+            "%b %d, %Y, %I:%M %p EST"
         )
     else:
         last_msg_str = "Never"
@@ -386,12 +393,12 @@ async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     # Action buttons
     buttons = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("⚠️ Warnings", callback_data=f"info_warn_{uid}"),
-            InlineKeyboardButton("🔇 Silence", callback_data=f"info_mute_{uid}"),
+            InlineKeyboardButton("🟨 ⚠️ Warnings", callback_data=f"info_warn_{uid}"),
+            InlineKeyboardButton("🟥 🔇 Silence", callback_data=f"info_mute_{uid}"),
         ],
         [
-            InlineKeyboardButton("🚫 Ban", callback_data=f"info_ban_{uid}"),
-            InlineKeyboardButton("🔑 Permissions", callback_data=f"info_perms_{uid}"),
+            InlineKeyboardButton("🟥 🚫 Ban", callback_data=f"info_ban_{uid}"),
+            InlineKeyboardButton("🟦 🔑 Permissions", callback_data=f"info_perms_{uid}"),
         ],
     ])
 
