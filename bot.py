@@ -225,66 +225,66 @@ def generate_math_problem() -> tuple[str, int]:
 def _store_country_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🇺🇸 USA", callback_data="store_country_US", api_kwargs={"style": "primary"}),
-            InlineKeyboardButton("🇨🇦 CA", callback_data="store_country_CA", api_kwargs={"style": "danger"}),
-            InlineKeyboardButton("🇬🇧 UK", callback_data="store_country_UK", api_kwargs={"style": "danger"}),
+            InlineKeyboardButton("🇺🇸 USA", callback_data="store_country_US", style="primary"),
+            InlineKeyboardButton("🇨🇦 CA", callback_data="store_country_CA", style="danger"),
+            InlineKeyboardButton("🇬🇧 UK", callback_data="store_country_UK", style="danger"),
         ],
         [
-            InlineKeyboardButton("🇪🇺 EU", callback_data="store_country_EU", api_kwargs={"style": "primary"}),
-            InlineKeyboardButton("🇦🇺 AUS", callback_data="store_country_AUS", api_kwargs={"style": "success"}),
-            InlineKeyboardButton("🇲🇽 MX", callback_data="store_country_MX", api_kwargs={"style": "success"}),
+            InlineKeyboardButton("🇪🇺 EU", callback_data="store_country_EU", style="primary"),
+            InlineKeyboardButton("🇦🇺 AUS", callback_data="store_country_AUS", style="success"),
+            InlineKeyboardButton("🇲🇽 MX", callback_data="store_country_MX", style="success"),
         ],
     ])
 
 
 def _store_timeframe_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Instant", callback_data="store_timeframe_TF_INSTANT", api_kwargs={"style": "success"})],
-        [InlineKeyboardButton("1-5 Days", callback_data="store_timeframe_TF_1_5_DAYS", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("7 Days", callback_data="store_timeframe_TF_7_DAYS", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("1-2 Weeks", callback_data="store_timeframe_TF_1_2_WEEKS", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("2-3 Weeks", callback_data="store_timeframe_TF_2_3_WEEKS", api_kwargs={"style": "danger"})],
-        [InlineKeyboardButton("3-4 Weeks", callback_data="store_timeframe_TF_3_4_WEEKS", api_kwargs={"style": "danger"})],
-        [InlineKeyboardButton("4 Weeks", callback_data="store_timeframe_TF_4_WEEKS", api_kwargs={"style": "danger"})],
+        [InlineKeyboardButton("Instant", callback_data="store_timeframe_TF_INSTANT", style="success")],
+        [InlineKeyboardButton("1-5 Days", callback_data="store_timeframe_TF_1_5_DAYS", style="primary")],
+        [InlineKeyboardButton("7 Days", callback_data="store_timeframe_TF_7_DAYS", style="primary")],
+        [InlineKeyboardButton("1-2 Weeks", callback_data="store_timeframe_TF_1_2_WEEKS", style="primary")],
+        [InlineKeyboardButton("2-3 Weeks", callback_data="store_timeframe_TF_2_3_WEEKS", style="danger")],
+        [InlineKeyboardButton("3-4 Weeks", callback_data="store_timeframe_TF_3_4_WEEKS", style="danger")],
+        [InlineKeyboardButton("4 Weeks", callback_data="store_timeframe_TF_4_WEEKS", style="danger")],
     ])
 
 
 def _store_method_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("FTIDv3", callback_data="store_method_M_FTID_V3", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("Weighted FTID", callback_data="store_method_M_WEIGHTED_FTID", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("LIT", callback_data="store_method_M_LIT", api_kwargs={"style": "success"})],
-        [InlineKeyboardButton("DNA", callback_data="store_method_M_DNA", api_kwargs={"style": "success"})],
-        [InlineKeyboardButton("EB", callback_data="store_method_M_EB", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("FTID ROS", callback_data="store_method_M_FTID_ROS", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("FTID ROD", callback_data="store_method_M_FTID_ROD", api_kwargs={"style": "danger"})],
-        [InlineKeyboardButton("FTIDNA", callback_data="store_method_M_FTIDNA", api_kwargs={"style": "danger"})],
-        [InlineKeyboardButton("DMG RTS", callback_data="store_method_M_DMG_RTS", api_kwargs={"style": "danger"})],
-        [InlineKeyboardButton("RTS", callback_data="store_method_M_RTS", api_kwargs={"style": "danger"})],
-        [InlineKeyboardButton("UTD", callback_data="store_method_M_UTD", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("PTDNA", callback_data="store_method_M_PTDNA", api_kwargs={"style": "primary"})],
-        [InlineKeyboardButton("PEB", callback_data="store_method_M_PEB", api_kwargs={"style": "primary"})],
+        [InlineKeyboardButton("FTIDv3", callback_data="store_method_M_FTID_V3", style="primary")],
+        [InlineKeyboardButton("Weighted FTID", callback_data="store_method_M_WEIGHTED_FTID", style="primary")],
+        [InlineKeyboardButton("LIT", callback_data="store_method_M_LIT", style="success")],
+        [InlineKeyboardButton("DNA", callback_data="store_method_M_DNA", style="success")],
+        [InlineKeyboardButton("EB", callback_data="store_method_M_EB", style="primary")],
+        [InlineKeyboardButton("FTID ROS", callback_data="store_method_M_FTID_ROS", style="primary")],
+        [InlineKeyboardButton("FTID ROD", callback_data="store_method_M_FTID_ROD", style="danger")],
+        [InlineKeyboardButton("FTIDNA", callback_data="store_method_M_FTIDNA", style="danger")],
+        [InlineKeyboardButton("DMG RTS", callback_data="store_method_M_DMG_RTS", style="danger")],
+        [InlineKeyboardButton("RTS", callback_data="store_method_M_RTS", style="danger")],
+        [InlineKeyboardButton("UTD", callback_data="store_method_M_UTD", style="primary")],
+        [InlineKeyboardButton("PTDNA", callback_data="store_method_M_PTDNA", style="primary")],
+        [InlineKeyboardButton("PEB", callback_data="store_method_M_PEB", style="primary")],
     ])
 
 
 def _store_notes_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("N/A", callback_data="store_notes_na", api_kwargs={"style": "primary"})],
+        [InlineKeyboardButton("N/A", callback_data="store_notes_na", style="primary")],
     ])
 
 
 def _store_destination_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🇺🇸 USA", callback_data="store_destination_USA", api_kwargs={"style": "primary"}),
-            InlineKeyboardButton("🇨🇦 CA",  callback_data="store_destination_CA", api_kwargs={"style": "danger"}),
+            InlineKeyboardButton("🇺🇸 USA", callback_data="store_destination_USA", style="primary"),
+            InlineKeyboardButton("🇨🇦 CA",  callback_data="store_destination_CA", style="danger"),
         ],
         [
-            InlineKeyboardButton("🇬🇧 UK",  callback_data="store_destination_UK", api_kwargs={"style": "danger"}),
-            InlineKeyboardButton("🇪🇺 EU",  callback_data="store_destination_EU", api_kwargs={"style": "primary"}),
+            InlineKeyboardButton("🇬🇧 UK",  callback_data="store_destination_UK", style="danger"),
+            InlineKeyboardButton("🇪🇺 EU",  callback_data="store_destination_EU", style="primary"),
         ],
         [
-            InlineKeyboardButton("ROS/ROD", callback_data="store_destination_ROSROD", api_kwargs={"style": "danger"}),
+            InlineKeyboardButton("ROS/ROD", callback_data="store_destination_ROSROD", style="danger"),
         ],
     ])
 
@@ -301,10 +301,10 @@ _STORE_DESTINATION_URLS: dict[str, str] = {
 
 def _store_preview_keyboard(store_url: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Visit Store", url=store_url, api_kwargs={"style": "primary"})],
+        [InlineKeyboardButton("Visit Store", url=store_url, style="primary")],
         [
-            InlineKeyboardButton("✅ Confirm", callback_data="store_preview_confirm", api_kwargs={"style": "success"}),
-            InlineKeyboardButton("❌ Cancel", callback_data="store_preview_cancel", api_kwargs={"style": "danger"}),
+            InlineKeyboardButton("✅ Confirm", callback_data="store_preview_confirm", style="success"),
+            InlineKeyboardButton("❌ Cancel", callback_data="store_preview_cancel", style="danger"),
         ],
     ])
 
@@ -423,8 +423,8 @@ def _custom_preview_keyboard(button_specs: list[list[dict[str, str]]]) -> Inline
             for row in button_specs
         ])
     rows.append([
-        InlineKeyboardButton("✅ Confirm", callback_data="custom_preview_confirm", api_kwargs={"style": "success"}),
-        InlineKeyboardButton("❌ Cancel", callback_data="custom_preview_cancel", api_kwargs={"style": "danger"}),
+        InlineKeyboardButton("✅ Confirm", callback_data="custom_preview_confirm", style="success"),
+        InlineKeyboardButton("❌ Cancel", callback_data="custom_preview_cancel", style="danger"),
     ])
     return InlineKeyboardMarkup(rows)
 
@@ -796,11 +796,6 @@ def _countdown_bar(seconds_left: int, total_seconds: int = 60, width: int = 12) 
 _START_BUTTON_STYLES = ("success", "primary", "danger")
 
 
-def _start_button_style(index: int) -> dict:
-    """Return api_kwargs dict with the appropriate style for this index."""
-    return {"style": _START_BUTTON_STYLES[index % len(_START_BUTTON_STYLES)]}
-
-
 def _gateway_links_text(seconds_left: int) -> str:
     return (
         f"🔗 Here are your invite links (valid for the next {seconds_left} seconds):\n"
@@ -835,7 +830,7 @@ def _math_answer_keyboard(options: list[int], answer: int) -> InlineKeyboardMark
                 InlineKeyboardButton(
                     str(value),
                     callback_data=f"math_answer_{value}",
-                    api_kwargs={"style": style},
+                    style=style,
                 )
             )
         rows.append(row)
@@ -923,14 +918,14 @@ async def _complete_gateway_success(update: Update, context: ContextTypes.DEFAUL
             _name_lower = gname.strip().lower()
             if _name_lower == "chat":
                 label = "🔗 Chat"
-                btn_style = {"style": "primary"}
+                btn_style = "primary"
             elif _name_lower == "main":
                 label = "🔗 VIP Group"
-                btn_style = {"style": "success"}
+                btn_style = "success"
             else:
                 label = f"🔗 {gname}"
-                btn_style = _start_button_style(idx)
-            buttons.append([InlineKeyboardButton(label, url=invite.invite_link, api_kwargs=btn_style)])
+                btn_style = _START_BUTTON_STYLES[idx % len(_START_BUTTON_STYLES)]
+            buttons.append([InlineKeyboardButton(label, url=invite.invite_link, style=btn_style)])
             button_specs.append([{"text": label, "url": invite.invite_link}])
             logger.info("Link created → %s (%s) | %s", gid, gname, invite.invite_link)
         except (Forbidden, BadRequest) as exc:
@@ -1292,7 +1287,7 @@ async def _finalize_add_store(update: Update, context: ContextTypes.DEFAULT_TYPE
     data = flow.get("data", {})
     store_url = data.get("store_url", "")
     caption = _build_store_caption(data)
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Visit Store", url=store_url, api_kwargs={"style": "primary"})]])
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Visit Store", url=store_url, style="primary")]])
 
     image_type = data.get("image_type")
     image_value = data.get("image")
@@ -2008,8 +2003,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🇺🇸 English", callback_data="lang_en", api_kwargs={"style": "primary"}),
-            InlineKeyboardButton("🇲🇽 Español", callback_data="lang_es", api_kwargs={"style": "success"}),
+            InlineKeyboardButton("🇺🇸 English", callback_data="lang_en", style="primary"),
+            InlineKeyboardButton("🇲🇽 Español", callback_data="lang_es", style="success"),
         ]
     ])
     msg = await update.message.reply_text(
@@ -2117,7 +2112,7 @@ async def math_answer_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     if selected_answer != flow.get("answer"):
         pending[user_id] = {"lang": lang}
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Try Again", callback_data="retry_captcha", api_kwargs={"style": "primary"})]
+            [InlineKeyboardButton("🔄 Try Again", callback_data="retry_captcha", style="primary")]
         ])
         await query.edit_message_text(
             "❌ Incorrect answer.\nUse /start to try again with a new problem.",
@@ -2320,8 +2315,8 @@ async def mute_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     buttons = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🔑 Permissions", callback_data=f"info_perms_{target.id}", api_kwargs={"style": "primary"}),
-            InlineKeyboardButton("✅ Unmute", callback_data=f"unmute_{target.id}", api_kwargs={"style": "success"}),
+            InlineKeyboardButton("🔑 Permissions", callback_data=f"info_perms_{target.id}", style="primary"),
+            InlineKeyboardButton("✅ Unmute", callback_data=f"unmute_{target.id}", style="success"),
         ]
     ])
 
