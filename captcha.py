@@ -107,8 +107,7 @@ async def restrict_and_welcome(chat, user, context, lang):
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(
             t(lang, "captcha_button"),
-            callback_data=f"captcha_{user.id}",
-            api_kwargs={"style": "success"},
+            callback_data=f"captcha_{user.id}", style="success",
         )]
     ])
 
