@@ -108,6 +108,7 @@ async def restrict_and_welcome(chat, user, context, lang):
         [InlineKeyboardButton(
             t(lang, "captcha_button"),
             callback_data=f"captcha_{user.id}",
+            api_kwargs={"style": "success"},
         )]
     ])
 
