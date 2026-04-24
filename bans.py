@@ -101,7 +101,7 @@ async def ban_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             f"• Reason: {reason}"
         )
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("✅ Unban", callback_data=f"unban_{user_id}", api_kwargs={"style": "success"})]
+            [InlineKeyboardButton("✅ Unban", callback_data=f"unban_{user_id}", style="success")]
         ])
         await update.message.reply_text(ban_text, reply_markup=buttons, parse_mode="Markdown")
     except (BadRequest, Forbidden) as exc:
