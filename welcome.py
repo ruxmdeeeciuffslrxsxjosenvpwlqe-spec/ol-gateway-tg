@@ -393,12 +393,12 @@ async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     # Action buttons
     buttons = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🟨 ⚠️ Warnings", callback_data=f"info_warn_{uid}"),
-            InlineKeyboardButton("🟥 🔇 Silence", callback_data=f"info_mute_{uid}"),
+            InlineKeyboardButton("⚠️ Warnings", callback_data=f"info_warn_{uid}", api_kwargs={"style": "primary"}),
+            InlineKeyboardButton("🔇 Silence", callback_data=f"info_mute_{uid}", api_kwargs={"style": "danger"}),
         ],
         [
-            InlineKeyboardButton("🟥 🚫 Ban", callback_data=f"info_ban_{uid}"),
-            InlineKeyboardButton("🟦 🔑 Permissions", callback_data=f"info_perms_{uid}"),
+            InlineKeyboardButton("🚫 Ban", callback_data=f"info_ban_{uid}", api_kwargs={"style": "danger"}),
+            InlineKeyboardButton("🔑 Permissions", callback_data=f"info_perms_{uid}", api_kwargs={"style": "primary"}),
         ],
     ])
 
