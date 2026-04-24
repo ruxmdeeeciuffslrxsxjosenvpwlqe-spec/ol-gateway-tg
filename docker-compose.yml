@@ -1,0 +1,7 @@
+services:
+  gateway-tg-bot:
+    build: .
+    container_name: gateway-tg-bot
+    env_file:
+      - .env
+    restart: unless-stopped
