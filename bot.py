@@ -839,7 +839,14 @@ def _math_answer_keyboard(options: list[int], answer: int) -> InlineKeyboardMark
 
 def _links_keyboard_from_specs(button_specs: list[list[dict[str, str]]]) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(btn["text"], url=btn["url"]) for btn in row]
+        [
+            InlineKeyboardButton(
+                btn["text"],
+                url=btn["url"],
+                **({"style": btn["style"]} if btn.get("style") else {}),
+            )
+            for btn in row
+        ]
         for row in button_specs
     ])
 
@@ -926,7 +933,7 @@ async def _complete_gateway_success(update: Update, context: ContextTypes.DEFAUL
                 label = f"🔗 {gname}"
                 btn_style = _START_BUTTON_STYLES[idx % len(_START_BUTTON_STYLES)]
             buttons.append([InlineKeyboardButton(label, url=invite.invite_link, style=btn_style)])
-            button_specs.append([{"text": label, "url": invite.invite_link}])
+            button_specs.append([{"text": label, "url": invite.invite_link, "style": btn_style}])
             logger.info("Link created → %s (%s) | %s", gid, gname, invite.invite_link)
         except (Forbidden, BadRequest) as exc:
             logger.warning("Error creating link in %s (%s): %s", gid, gname, exc)
