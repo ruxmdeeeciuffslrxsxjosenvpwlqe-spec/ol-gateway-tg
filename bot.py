@@ -796,13 +796,25 @@ def _countdown_bar(seconds_left: int, total_seconds: int = 60, width: int = 12) 
 _START_BUTTON_STYLES = ("success", "primary", "danger")
 
 
-def _gateway_links_text(seconds_left: int) -> str:
-    return (
-        f"🔗 Here are your invite links (valid for the next {seconds_left} seconds):\n"
-        f"{_countdown_bar(seconds_left)}\n\n"
+_GATEWAY_LINKS_TEXT = {
+    "en": (
+        "🔗 Here are your invite links (valid for the next {seconds_left} seconds):\n"
+        "{bar}\n\n"
         "Tap the buttons below to join the rooms. 👇\n"
         "If they expire, no worries! Just type /start again to get new buttons. ⏰"
-    )
+    ),
+    "es": (
+        "🔗 Aquí están tus enlaces de invitación (válidos por {seconds_left} segundos más):\n"
+        "{bar}\n\n"
+        "Toca los botones de abajo para unirte a las salas. 👇\n"
+        "Si expiran, ¡no pasa nada! Solo escribe /start para obtener nuevos botones. ⏰"
+    ),
+}
+
+
+def _gateway_links_text(seconds_left: int, lang: str = "en") -> str:
+    template = _GATEWAY_LINKS_TEXT.get(lang, _GATEWAY_LINKS_TEXT["en"])
+    return template.format(seconds_left=seconds_left, bar=_countdown_bar(seconds_left))
 
 
 def _math_answer_options(answer: int) -> list[int]:
@@ -878,6 +890,7 @@ async def _links_countdown_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     total_seconds = int(data.get("total_seconds", 60))
     started_at = float(data.get("started_at", time.time()))
     button_specs = data.get("button_specs", [])
+    lang = data.get("lang", "en")
 
     if not user_id or not message_id:
         context.job.schedule_removal()
@@ -890,7 +903,7 @@ async def _links_countdown_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         await context.bot.edit_message_text(
             chat_id=user_id,
             message_id=message_id,
-            text=_gateway_links_text(seconds_left),
+            text=_gateway_links_text(seconds_left, lang),
             reply_markup=_links_keyboard_from_specs(button_specs),
         )
     except BadRequest as exc:
@@ -944,7 +957,7 @@ async def _complete_gateway_success(update: Update, context: ContextTypes.DEFAUL
         return
 
     links_msg = await source_message.reply_text(
-        _gateway_links_text(60),
+        _gateway_links_text(60, lang),
         reply_markup=InlineKeyboardMarkup(buttons),
     )
     _dm_messages.setdefault(user_id, []).append(links_msg.message_id)
@@ -960,6 +973,7 @@ async def _complete_gateway_success(update: Update, context: ContextTypes.DEFAUL
             "total_seconds": 60,
             "started_at": time.time(),
             "button_specs": button_specs,
+            "lang": lang,
         },
         name=countdown_job_name,
     )
@@ -2119,18 +2133,16 @@ async def math_answer_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     if selected_answer != flow.get("answer"):
         pending[user_id] = {"lang": lang}
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Try Again", callback_data="retry_captcha", style="primary")]
+            [InlineKeyboardButton(("🔄 Intentar de nuevo" if lang == "es" else ("🔄 Intentar de nuevo" if lang == "es" else "🔄 Try Again")), callback_data="retry_captcha", style="primary")]
         ])
         await query.edit_message_text(
-            "❌ Incorrect answer.\nUse /start to try again with a new problem.",
+            t(lang, "incorrect"),
             reply_markup=keyboard,
         )
         return
 
     pending.pop(user_id, None)
-    await query.edit_message_text(
-        "✅ Well done! That’s correct! 🎉 I’m now generating your invite links... 🚀"
-    )
+    await query.edit_message_text(t(lang, "correct"))
     await _complete_gateway_success(update, context, user_id, lang)
 
 
