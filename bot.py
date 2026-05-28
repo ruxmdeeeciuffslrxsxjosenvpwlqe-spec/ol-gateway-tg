@@ -909,8 +909,10 @@ async def _links_countdown_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     except BadRequest as exc:
         if "message is not modified" not in str(exc).lower():
             context.job.schedule_removal()
+            return
     except Forbidden:
         context.job.schedule_removal()
+        return
 
     if seconds_left <= 0:
         context.job.schedule_removal()
@@ -2132,8 +2134,9 @@ async def math_answer_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
     if selected_answer != flow.get("answer"):
         pending[user_id] = {"lang": lang}
+        retry_label = "🔄 Intentar de nuevo" if lang == "es" else "🔄 Try Again"
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(("🔄 Intentar de nuevo" if lang == "es" else ("🔄 Intentar de nuevo" if lang == "es" else "🔄 Try Again")), callback_data="retry_captcha", style="primary")]
+            [InlineKeyboardButton(retry_label, callback_data="retry_captcha", style="primary")]
         ])
         await query.edit_message_text(
             t(lang, "incorrect"),
@@ -2198,9 +2201,9 @@ async def dot_command_trigger(update: Update, context: ContextTypes.DEFAULT_TYPE
     if text.startswith(".info"):
         await info_command(update, context)
     elif text.startswith(".mute"):
-        await mute_command(update, context)
+        await _dot_mute_command(update, context)
     elif text.startswith(".unmute"):
-        await unmute_command(update, context)
+        await _dot_unmute_command(update, context)
     elif text.startswith(".warning"):
         await warning_command(update, context)
 
@@ -2268,7 +2271,7 @@ async def warning_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await msg.reply_text(warn_text, parse_mode="Markdown")
 
 
-async def mute_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def _dot_mute_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """.mute <time> <reason> — reply to a message to mute that user."""
     msg = update.effective_message
     chat = update.effective_chat
@@ -2342,7 +2345,7 @@ async def mute_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await msg.reply_text(mute_text, reply_markup=buttons, parse_mode="Markdown")
 
 
-async def unmute_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def _dot_unmute_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """.unmute — reply to a message to unmute that user."""
     msg = update.effective_message
     chat = update.effective_chat
